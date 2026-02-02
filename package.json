@@ -16,6 +16,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@deepgram/sdk": "^4.11.3",
     "@pinecone-database/pinecone": "^7.0.0",
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
@@ -25,7 +26,8 @@
     "mysql2": "^3.16.2",
     "objection": "^3.1.5",
     "openai": "^6.17.0",
-    "socket.io": "^4.8.3"
+    "socket.io": "^4.8.3",
+    "ws": "^8.19.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"
