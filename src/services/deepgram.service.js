@@ -112,16 +112,33 @@ export function createDeepgramConnection(clientWs) {
     //       },
     //     }
     //   );
+    // const deepgram = new WebSocket(
+    //     "wss://api.deepgram.com/v1/listen" +
+    //     "?model=nova-2" +
+    //     "&language=en-US" +
+    //     "&diarize=true" +
+    //     "&smart_format=true" +
+    //     "&punctuate=true" +
+    //     // "&interim_results=false" +
+    //     "&vad_events=true" +
+    //     "&endpointing=300",
+    //     {
+    //         headers: {
+    //             Authorization: `Token ${process.env.DEEPGRAM_API_KEY}`,
+    //         },
+    //     }
+    // );
     const deepgram = new WebSocket(
         "wss://api.deepgram.com/v1/listen" +
         "?model=nova-2" +
         "&language=en-US" +
         "&diarize=true" +
+        "&multichannel=true" + // Force single channel processing
         "&smart_format=true" +
         "&punctuate=true" +
-        // "&interim_results=false" +
+        "&interim_results=false" + // ✅ Disable interim for better accuracy
         "&vad_events=true" +
-        "&endpointing=300",
+        "&endpointing=1000", // ✅ Longer silence detection
         {
             headers: {
                 Authorization: `Token ${process.env.DEEPGRAM_API_KEY}`,
@@ -136,7 +153,6 @@ export function createDeepgramConnection(clientWs) {
 
     deepgram.on("message", (msg) => {
         const data = JSON.parse(msg.toString());
-        console.log(data, "deepgram response");
 
         // if (!data.is_final) return;
 

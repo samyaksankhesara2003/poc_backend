@@ -10,4 +10,5 @@ router.get('/test',pocController.testController);
 
 router.post('/upload',multer().single('audio'),pocController.uploadController);
 
+router.post('/analysis',pocController.analyseChat)
 export default router;

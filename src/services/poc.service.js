@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { promisify } from "util";
 import dotenv from "dotenv";
+import OpenAI from "openai";
 dotenv.config();
 
 import { Pinecone } from "@pinecone-database/pinecone";
@@ -29,7 +30,7 @@ const transcribeAudio = async (audioPath) => {
     if (!isWav) {
         wavPath = audioPath.replace(/\.[^.]+$/, '.wav');
         const convertCommand = `ffmpeg -i "${audioPath}" -ar 16000 -ac 1 -c:a pcm_s16le "${wavPath}"`;
-        
+
         try {
             await execAsync(convertCommand);
             console.log('Audio converted successfully');
@@ -43,7 +44,7 @@ const transcribeAudio = async (audioPath) => {
     const txtPath = path.join(outputDir, `${fileName}.txt`);
 
     const command = `/home/techuz/.local/bin/whisper "${wavPath}" --model small --language en --output_format txt --output_dir ${outputDir}`;
-    
+
     try {
         const { stdout, stderr } = await execAsync(command);
         console.log('Whisper transcription completed');
@@ -66,7 +67,34 @@ const transcribeAudio = async (audioPath) => {
 
     return text.trim();
 };
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+const analyseChatService = async (text) => {
+    try {
+
+        const response = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [
+                {
+                    role: "system",
+                    content:
+                        "Analyze the following conversation and return JSON with tone, sentiment, intent, emotion, summary"
+                },
+                {
+                    role: "user",
+                    content: text
+                }
+            ],
+            response_format: { type: "json_object" }
+        });
+
+        return response.choices[0].message.content;
+    } catch (error) {
+        console.error('error in getting text')
+    }
+}
 export const pocService = {
     testService,
-    transcribeAudio
+    transcribeAudio,
+    analyseChatService
 }

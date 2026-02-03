@@ -3,13 +3,13 @@ import fs from 'fs';
 import path from 'path';
 
 const testController = async (req, res) => {
-    try {
-        const data = await pocService.testService();
-        res.status(200).json(data);
-    }
-    catch (error) {
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
+  try {
+    const data = await pocService.testService();
+    res.status(200).json(data);
+  }
+  catch (error) {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 }
 
 const uploadController = async (req, res) => {
@@ -39,7 +39,21 @@ const uploadController = async (req, res) => {
   }
 };
 
+const analyseChat = async (req, res) => {
+  try {
+    const { text } = req.body
+    const data = await pocService.analyseChatService(text)
+    console.log(data);
+
+    res.json({ success: true, data })
+  } catch (error) {
+    console.error('Upload controller error:', error);
+    res.status(500).json({ error: "Transcription failed" });
+  }
+}
+
 export const pocController = {
-    testController,
-    uploadController
+  testController,
+  uploadController,
+  analyseChat
 }

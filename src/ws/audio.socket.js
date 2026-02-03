@@ -33,6 +33,7 @@
 import { WebSocketServer } from "ws";
 import { createDeepgramConnection } from "../services/deepgram.service.js";
 import WebSocket from "ws";
+import { createDeepConnection } from "../services/deep.service.js";
 
 export function initAudioSocket(server) {
   const wss = new WebSocketServer({ server });
@@ -40,7 +41,8 @@ export function initAudioSocket(server) {
   wss.on("connection", (client) => {
     console.log("🎙️ Client connected");
 
-    const dgConnection = createDeepgramConnection(client);
+    // const dgConnection = createDeepgramConnection(client);
+    const dgConnection = createDeepConnection(client);
 
     client.on("message", (audioChunk) => {
       if (

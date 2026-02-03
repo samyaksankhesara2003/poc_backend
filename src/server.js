@@ -19,7 +19,7 @@ dotenv.config();
 import http from "http";
 import app from "./app.js";
 import { initAudioSocket } from "./ws/audio.socket.js";
-
+import { initDynamicAudioSocket } from "./ws/dynamicAudio.socket.js";
 const PORT = process.env.PORT || 3000;
 
 // ✅ attach Express to HTTP server
@@ -27,7 +27,7 @@ const server = http.createServer(app);
 
 // ✅ attach WebSocket to SAME server
 initAudioSocket(server);
-
+// initDynamicAudioSocket(server)
 server.listen(PORT, () => {
   console.log(`🚀 Backend running on port ${PORT}`);
 });
