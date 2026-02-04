@@ -6,13 +6,15 @@ export function createDeepConnection(clientWs) {
         "?model=nova-2" +
         "&language=en-US" +
         "&diarize=true" +
-        "&diarize_version=latest" + // ✅ Use latest diarization
+        "&diarize_version=latest" +
         "&smart_format=true" +
         "&punctuate=true" +
-        "&interim_results=true" + // ✅ Enable interim results
+        "&interim_results=true" +
         "&vad_events=true" +
-        "&endpointing=500" + // ✅ Increased from 300ms
-        "&utterance_end_ms=1500", // ✅ Wait longer before ending utterance
+        "&endpointing=500" +
+        "&utterance_end_ms=1500" +
+        "&encoding=linear16" +  
+        "&sample_rate=16000",
         {
             headers: {
                 Authorization: `Token ${process.env.DEEPGRAM_API_KEY}`,
@@ -20,16 +22,30 @@ export function createDeepConnection(clientWs) {
         }
     );
 
+    let keepAliveInterval;
+
     deepgram.on("open", () => {
         console.log("🧠 Deepgram connected");
+
+        // ✅ Send keepalive to prevent timeout
+        keepAliveInterval = setInterval(() => {
+            if (deepgram.readyState === WebSocket.OPEN) {
+                deepgram.send(JSON.stringify({ type: "KeepAlive" }));
+            }
+        }, 5000);
     });
 
     deepgram.on("message", (msg) => {
         const data = JSON.parse(msg.toString());
-        
+
+        // ✅ Handle metadata
+        if (data.type === "Metadata") {
+            console.log("📋 Deepgram metadata received");
+            return;
+        }
+
         // Only process final results for diarization
         if (!data.is_final) {
-            // Still show interim transcript without speaker info
             const alternative = data.channel?.alternatives?.[0];
             if (alternative?.transcript) {
                 clientWs.send(
@@ -38,7 +54,7 @@ export function createDeepConnection(clientWs) {
                         transcript: alternative.transcript,
                     })
                 );
-            }   
+            }
             return;
         }
 
@@ -46,8 +62,6 @@ export function createDeepConnection(clientWs) {
         if (!alternative || !alternative.transcript) return;
 
         const speakerSegments = groupBySpeaker(alternative.words || []);
-
-        // console.log("Final segments:", speakerSegments);
 
         clientWs.send(
             JSON.stringify({
@@ -59,12 +73,14 @@ export function createDeepConnection(clientWs) {
         );
     });
 
-    deepgram.on("close", () => {
-        console.log("❌ Deepgram disconnected");
+    deepgram.on("close", (code, reason) => {
+        console.log(`❌ Deepgram disconnected: ${code} - ${reason}`);
+        clearInterval(keepAliveInterval);
     });
 
     deepgram.on("error", (err) => {
         console.error("Deepgram error:", err);
+        clearInterval(keepAliveInterval);
     });
 
     return deepgram;
@@ -77,7 +93,7 @@ function groupBySpeaker(words = []) {
 
     for (const word of words) {
         if (word.speaker !== currentSpeaker) {
-            if (currentWords.length >= 3) { // ✅ Increased from 2 to 3
+            if (currentWords.length >= 3) {
                 result.push({
                     speaker: currentSpeaker,
                     text: currentWords.map(w => w.word).join(" "),
