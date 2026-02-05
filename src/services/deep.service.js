@@ -93,7 +93,7 @@ function groupBySpeaker(words = []) {
 
     for (const word of words) {
         if (word.speaker !== currentSpeaker) {
-            if (currentWords.length >= 3) {
+            if (currentWords.length >= 1) {
                 result.push({
                     speaker: currentSpeaker,
                     text: currentWords.map(w => w.word).join(" "),
@@ -106,7 +106,7 @@ function groupBySpeaker(words = []) {
         }
     }
 
-    if (currentWords.length >= 3) {
+    if (currentWords.length >= 1) {
         result.push({
             speaker: currentSpeaker,
             text: currentWords.map(w => w.word).join(" "),

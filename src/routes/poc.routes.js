@@ -4,11 +4,13 @@ import multer from 'multer';
 const router = Router();
 // const upload = multer({ storage: multer.memoryStorage() });
 
-router.get('/test',pocController.testController);
+router.get('/test', pocController.testController);
 
 // router.post("/upload", upload.single("audio"), pocController.uploadController);
 
-router.post('/upload',multer().single('audio'),pocController.uploadController);
+router.post('/upload', multer().single('audio'), pocController.uploadController);
 
-router.post('/analysis',pocController.analyseChat)
+router.post('/analysis', pocController.analyseChat)
+
+router.post('/rediarize-segment', pocController.reDiarizSagment)
 export default router;

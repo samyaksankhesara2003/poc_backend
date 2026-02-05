@@ -1,7 +1,12 @@
 import { pocService } from '../services/poc.service.js';
 import fs from 'fs';
 import path from 'path';
+import dotenv from "dotenv";
+import OpenAI from 'openai';
+dotenv.config();
 
+
+// const openAi = new OpenAI({})
 const testController = async (req, res) => {
   try {
     const data = await pocService.testService();
@@ -52,8 +57,23 @@ const analyseChat = async (req, res) => {
   }
 }
 
+const reDiarizSagment = async (req, res) => {
+  try {
+    
+
+    // const data = 
+    await pocService.reDiarizSagmentService(req,res)
+
+    // res.json({ success: true, data })
+  } catch (error) {
+    console.error('Upload controller error:', error);
+    res.status(500).json({ error: "Transcription failed" });
+  }
+}
+
 export const pocController = {
   testController,
   uploadController,
-  analyseChat
+  analyseChat,
+  reDiarizSagment
 }

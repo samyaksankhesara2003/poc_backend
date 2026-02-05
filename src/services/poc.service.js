@@ -93,8 +93,112 @@ const analyseChatService = async (text) => {
         console.error('error in getting text')
     }
 }
+
+const reDiarizSagmentService = async (req, res) => {
+    try {
+        const { segment, context = [] } = req.body;
+        
+        const recentContext = context
+            .map(s => `${s.speaker}: ${s.text}`)
+            .join('\n');
+
+        // -- first poc prompt 1st
+
+        const prompt = `You are analyzing a restaurant conversation between WAITER and CUSTOMER.
+
+        RECENT CONVERSATION:
+        ${recentContext || "No previous context"}
+
+        NEW SEGMENT:
+        "${segment.text}"
+
+        TASK: Determine who said this.
+
+        RULES:
+        - Waiters: greet, take orders, offer suggestions, serve
+        - Customers: order, ask questions, make requests
+
+        Respond with ONLY one word: "waiter" or "customer"`;
+
+
+        //-- second poc prompt 2nd
+        console.log(recentContext,"sam");
+        
+        // const prompt = `You are a restaurant conversation analyst with 99% accuracy.
+
+        //                 CONVERSATION SO FAR:
+        //                 ${recentContext || "⚠️ FIRST UTTERANCE - Likely waiter greeting"}
+
+        //                 CURRENT SEGMENT:
+        //                 "${segment.text}"
+
+        //                 DECISION TREE:
+
+        //                 CHECK STRONG KEYWORDS:
+        //                 Waiter: "welcome", "recommend", "special", "I'll get", "how is everything"
+        //                 Customer: "I'll have", "can I get", menu item names, "check please"
+
+        //                 ANALYZE SENTENCE STRUCTURE:
+        //                 Waiter: Questions (offering), statements (informing), confirmations
+        //                 Customer: Requests (ordering), questions (asking), preferences (modifying)
+
+        //                 EXAMINE CONTEXT FLOW:
+        //                 - What was the previous speaker likely to say?
+        //                 - What response makes logical sense?
+        //                 - Who typically speaks in this sequence?
+
+        //                 SPECIAL CASES:
+        //                 "Thank you" → Check who's receiving (customer) vs providing (waiter)
+        //                 "Okay/Sure/Yes" → Follow conversation flow
+        //                 Food names alone → Customer ordering
+        //                 First utterance → 95% waiter
+
+        //                 COMMON WAITER PHRASES:
+        //                 "Can I get you started", "I'll be right back", "Let me check", "That comes with", 
+        //                 "Anything to drink", "Room for", "I'll grab", "How are we doing"
+
+        //                 COMMON CUSTOMER PHRASES:  
+        //                 "I'll do the", "Can we have", "What's in", "How spicy", "No [ingredient]",
+        //                 "To go please", "Can you split", "We're ready to order"
+
+        //                 ⚡ OUTPUT ONLY: "waiter" or "customer" (nothing else)`;
+
+
+        const response = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [
+                {
+                    role: "system",
+                    content: "You are a conversation analyst. Respond with only 'waiter' or 'customer'."
+                },
+                {
+                    role: "user",
+                    content: prompt
+                }
+            ],
+            max_tokens: 10,
+            temperature: 0.3,
+        });
+
+        const role = response.choices[0].message.content.trim().toLowerCase();
+
+        res.json({
+            corrected: {
+                speaker: role === "waiter" ? "waiter" : "customer",
+                text: segment.text,
+                originalSpeaker: segment.speaker,
+                confidence: "ai_corrected"
+            }
+        });
+        // const x = req.body
+        // return x;
+    } catch (error) {
+        console.error('error in catch', error)
+    }
+}
 export const pocService = {
     testService,
     transcribeAudio,
-    analyseChatService
+    analyseChatService,
+    reDiarizSagmentService
 }
