@@ -7,14 +7,17 @@ import { initAudioSocket } from "./ws/audio.socket.js";
 import { initDynamicAudioSocket } from "./ws/dynamicAudio.socket.js";
 import { handleSpeechMatrixConnection } from "./ws/speechMatrix.js";
 import { initPythonSocket } from "./ws/python.socket.js";
+import { handleSpeechMatrixConnectionSession } from "./ws/sessionSocket.js";
+
 const PORT = process.env.PORT || 3000;
 
 const server = http.createServer(app);
 
 // initAudioSocket(server);
 // initDynamicAudioSocket(server);
-handleSpeechMatrixConnection(server);
 // initPythonSocket(server);
+// handleSpeechMatrixConnection(server);
+handleSpeechMatrixConnectionSession(server)
 server.listen(PORT, () => {
   console.log(`🚀 Backend running on port ${PORT}`);
 });
