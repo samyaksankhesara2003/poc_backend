@@ -97,7 +97,7 @@ const analyseChatService = async (text) => {
 const reDiarizSagmentService = async (req, res) => {
     try {
         const { segment, context = [] } = req.body;
-        
+
         const recentContext = context
             .map(s => `${s.speaker}: ${s.text}`)
             .join('\n');
@@ -123,7 +123,7 @@ const reDiarizSagmentService = async (req, res) => {
 
         //-- second poc prompt 2nd
         console.log(recentContext,"sam");
-        
+
         // const prompt = `You are a restaurant conversation analyst with 99% accuracy.
 
         //                 CONVERSATION SO FAR:
