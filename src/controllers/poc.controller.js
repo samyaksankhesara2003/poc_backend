@@ -67,7 +67,7 @@ const reDiarizSagment = async (req, res) => {
   }
 };
 
-/** Waiter voice enrollment: save audio, transcribe (Whisper), embed (OpenAI), store in Pinecone */
+/** Waiter voice enrollment: save audio → extract speaker embedding → store in Pinecone */
 const waiterEnrollmentController = async (req, res) => {
   try {
     if (!req.file || !req.file.buffer) {
@@ -81,8 +81,7 @@ const waiterEnrollmentController = async (req, res) => {
     }
     res.status(200).json({
       success: true,
-      message: "Waiter voice stored in Pinecone",
-      transcript: result.transcript,
+      message: "Waiter voice print stored in Pinecone",
       waiterId: result.waiterId,
       filename: result.filename,
     });
