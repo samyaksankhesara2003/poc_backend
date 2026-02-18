@@ -1,4 +1,5 @@
 import { pocService } from '../services/poc.service.js';
+import { enrollWaiterVoice } from '../services/waiterEnrollment.service.js';
 import fs from 'fs';
 import path from 'path';
 import dotenv from "dotenv";
@@ -59,21 +60,42 @@ const analyseChat = async (req, res) => {
 
 const reDiarizSagment = async (req, res) => {
   try {
-    
-
-    // const data = 
-    await pocService.reDiarizSagmentService(req,res)
-
-    // res.json({ success: true, data })
+    await pocService.reDiarizSagmentService(req, res);
   } catch (error) {
     console.error('Upload controller error:', error);
     res.status(500).json({ error: "Transcription failed" });
   }
-}
+};
+
+/** Waiter voice enrollment: save audio, transcribe (Whisper), embed (OpenAI), store in Pinecone */
+const waiterEnrollmentController = async (req, res) => {
+  try {
+    if (!req.file || !req.file.buffer) {
+      return res.status(400).json({ success: false, error: "Audio file is required" });
+    }
+    const sessionId = req.body?.sessionId || null;
+    const originalName = req.file.originalname || "waiter-recording.webm";
+    const result = await enrollWaiterVoice(req.file.buffer, sessionId, originalName);
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+    res.status(200).json({
+      success: true,
+      message: "Waiter voice stored in Pinecone",
+      transcript: result.transcript,
+      waiterId: result.waiterId,
+      filename: result.filename,
+    });
+  } catch (error) {
+    console.error("Waiter enrollment error:", error);
+    res.status(500).json({ success: false, error: error?.message || "Enrollment failed" });
+  }
+};
 
 export const pocController = {
   testController,
   uploadController,
   analyseChat,
-  reDiarizSagment
-}
+  reDiarizSagment,
+  waiterEnrollmentController,
+};
