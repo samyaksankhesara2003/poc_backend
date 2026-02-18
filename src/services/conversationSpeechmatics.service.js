@@ -11,12 +11,15 @@ function isPunctuationOnly(s) {
 /** 16 kHz × 2 bytes (16-bit) = 32 000 bytes per second */
 const BYTES_PER_SEC = 16000 * 2;
 
-/** Minimum accumulated audio (seconds) before we attempt speaker identification. */
-const MIN_SPEAKER_AUDIO_SEC = 2;
+/** Min segment duration (sec) to run Pinecone; shorter segments default to "customer". */
+const MIN_SEGMENT_AUDIO_SEC = 1;
+
+/** Gap (sec) between words above which we start a new segment. */
+const SEGMENT_GAP_SEC = 0.4;
 
 /**
- * Tracks incoming PCM audio chunks so we can later extract time-based segments
- * that correspond to a specific Speechmatics speaker.
+ * Tracks incoming PCM audio chunks so we can extract time-based segments
+ * for custom Pinecone-based diarization.
  */
 export class AudioTracker {
   constructor() {
@@ -28,6 +31,15 @@ export class AudioTracker {
     const buf = Buffer.from(chunk);
     this.chunks.push(buf);
     this.totalBytes += buf.length;
+  }
+
+  /**
+   * Extract audio for a single time range [startSec, endSec].
+   * @param {{ start: number, end: number }} timeRange - in seconds
+   * @returns {Buffer}
+   */
+  extractSegment(timeRange) {
+    return this.extractSegments([timeRange]);
   }
 
   /**
@@ -58,73 +70,28 @@ export class AudioTracker {
 }
 
 /**
- * Creates a Speechmatics real-time socket that labels speakers as waiter/customer
- * by matching speaker **audio embeddings** to the enrolled waiter in Pinecone.
+ * Creates a Speechmatics real-time socket for transcription only.
+ * Speaker labels (waiter/customer) come from the continuous diarization
+ * (same isWaiter true/false as in logs): we look up getSpeakerAtTime(segmentTime).
  *
  * @param {WebSocket} clientWs   - Browser WebSocket
  * @param {string}    waiterId   - Waiter id from enrollment
  * @param {AudioTracker} audioTracker - Shared audio buffer
+ * @param {(timeSec: number) => { isWaiter: boolean, score: number } | null} [getSpeakerAtTime] - from continuous diarization; if provided, labels use this instead of per-segment Pinecone
  */
-export function createConversationSpeechmaticsSocket(clientWs, waiterId, audioTracker) {
+export function createConversationSpeechmaticsSocket(
+  clientWs,
+  waiterId,
+  audioTracker,
+  getSpeakerAtTime
+) {
   const smWs = new WebSocket("wss://eu2.rt.speechmatics.com/v2", {
     headers: {
       Authorization: `Bearer ${process.env.SPEECHMATICS_API_KEY}`,
     },
   });
 
-  /** Cache: Speechmatics speaker id (S1, S2, …) → "waiter" | "customer" */
-  const speakerLabelCache = new Map();
-
-  /** Per-speaker accumulated time ranges for audio extraction. */
-  const speakerTimings = new Map();
-
-  function addSpeakerTiming(speakerId, startTime, endTime) {
-    if (!speakerTimings.has(speakerId)) {
-      speakerTimings.set(speakerId, { ranges: [], total: 0 });
-    }
-    const info = speakerTimings.get(speakerId);
-    info.ranges.push({ start: startTime, end: endTime });
-    info.total += endTime - startTime;
-  }
-
-  async function resolveLabel(speakerId) {
-    if (speakerLabelCache.has(speakerId)) {
-      const label = speakerLabelCache.get(speakerId);
-      console.log("[Conversation] Speaker", speakerId, "→", label, "(cached)");
-      return label;
-    }
-
-    const info = speakerTimings.get(speakerId);
-    if (!info || info.total < MIN_SPEAKER_AUDIO_SEC) {
-      return "customer"; // tentative — not enough audio yet; NOT cached so we retry later
-    }
-
-    try {
-      const pcmBuffer = audioTracker.extractSegments(info.ranges);
-      if (pcmBuffer.length < BYTES_PER_SEC * 1) return "customer";
-
-      const { isWaiter, score } = await matchAudioToWaiter(pcmBuffer, waiterId);
-      const label = isWaiter ? "waiter" : "customer";
-      speakerLabelCache.set(speakerId, label);
-
-      // console.log(
-      //   "[Conversation] Speaker resolved via audio embedding:",
-      //   JSON.stringify({
-      //     speechmaticsSpeakerId: speakerId,
-      //     label,
-      //     score: score != null ? Math.round(score * 1000) / 1000 : null,
-      //     audioSec: Math.round(info.total * 10) / 10,
-      //   })
-      // );
-      return label;
-    } catch (err) {
-      console.error("[Conversation] Speaker resolve error:", err?.message);
-      return "customer";
-    }
-  }
-
   smWs.on("open", () => {
-    // console.log("✅ [Conversation] Connected to Speechmatics (waiter diarization)");
     smWs.send(
       JSON.stringify({
         message: "StartRecognition",
@@ -135,16 +102,11 @@ export function createConversationSpeechmaticsSocket(clientWs, waiterId, audioTr
         },
         transcription_config: {
           language: "en",
-          diarization: "speaker",
           operating_point: "enhanced",
           max_delay_mode: "flexible",
           max_delay: 1,
           enable_partials: true,
           enable_entities: true,
-          speaker_diarization_config: {
-            max_speakers: 10,
-            prefer_current_speaker: true,
-          },
         },
       })
     );
@@ -158,29 +120,68 @@ export function createConversationSpeechmaticsSocket(clientWs, waiterId, audioTr
         const results = message.results || [];
         if (results.length === 0) return;
 
-        for (const r of results) {
-          const speakerId = r.alternatives?.[0]?.speaker || "S1";
-          if (r.start_time != null && r.end_time != null) {
-            addSpeakerTiming(speakerId, r.start_time, r.end_time);
-          }
-        }
-
+        // Build segments from results (no Speechmatics speaker id).
+        // Group by time gap: gap > SEGMENT_GAP_SEC => new segment.
         const segments = [];
+        let current = null;
+
         for (const r of results) {
           const content = r.alternatives?.[0]?.content;
-          const speakerId = r.alternatives?.[0]?.speaker || "S1";
+          const startTime = r.start_time;
+          const endTime = r.end_time;
           if (content == null) continue;
-          if (segments.length > 0 && segments[segments.length - 1].speakerId === speakerId) {
-            const last = segments[segments.length - 1];
-            last.text += isPunctuationOnly(content) ? content : (last.text ? " " : "") + content;
+
+          const gap =
+            current != null && startTime != null ? startTime - current.endTime : SEGMENT_GAP_SEC + 1;
+
+          if (
+            current != null &&
+            gap <= SEGMENT_GAP_SEC &&
+            startTime != null &&
+            endTime != null
+          ) {
+            current.text += isPunctuationOnly(content) ? content : (current.text ? " " : "") + content;
+            current.endTime = endTime;
           } else {
-            segments.push({ speakerId, text: content });
+            current = {
+              startTime: startTime ?? current?.endTime ?? 0,
+              endTime: endTime ?? startTime ?? 0,
+              text: content,
+            };
+            segments.push(current);
           }
         }
 
         const labeled = [];
         for (const seg of segments) {
-          const label = await resolveLabel(seg.speakerId);
+          let label = "customer";
+          const midTime =
+            seg.startTime != null && seg.endTime != null
+              ? (seg.startTime + seg.endTime) / 2
+              : seg.endTime ?? seg.startTime ?? 0;
+
+          if (getSpeakerAtTime) {
+            const entry = getSpeakerAtTime(midTime);
+            if (entry) label = entry.isWaiter ? "waiter" : "customer";
+          } else if (
+            (seg.endTime ?? seg.startTime) - seg.startTime >= MIN_SEGMENT_AUDIO_SEC &&
+            seg.startTime != null &&
+            seg.endTime != null
+          ) {
+            try {
+              const pcmBuffer = audioTracker.extractSegment({
+                start: seg.startTime,
+                end: seg.endTime,
+              });
+              if (pcmBuffer.length >= BYTES_PER_SEC * MIN_SEGMENT_AUDIO_SEC) {
+                const { isWaiter } = await matchAudioToWaiter(pcmBuffer, waiterId);
+                label = isWaiter ? "waiter" : "customer";
+              }
+            } catch (err) {
+              console.error("[Conversation] Pinecone diarization error:", err?.message);
+            }
+          }
+
           labeled.push({ speaker: label, text: seg.text });
         }
 
@@ -190,7 +191,7 @@ export function createConversationSpeechmaticsSocket(clientWs, waiterId, audioTr
       }
 
       if (message.message === "EndOfTranscript") {
-        // console.log("🛑 [Conversation] Transcription finished");
+        // no-op
       }
 
       if (message.message === "Error") {
@@ -206,9 +207,7 @@ export function createConversationSpeechmaticsSocket(clientWs, waiterId, audioTr
     }
   });
 
-  smWs.on("close", () => {
-    // console.log("🔌 [Conversation] Speechmatics disconnected");
-  });
+  smWs.on("close", () => {});
 
   smWs.on("error", (err) => {
     console.error("[Conversation] Speechmatics error:", err);

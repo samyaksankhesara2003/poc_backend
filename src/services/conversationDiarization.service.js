@@ -35,14 +35,14 @@ export async function matchAudioToWaiter(pcmBuffer, waiterId) {
     const result = await index.query({
       vector: embedding,
       topK: 1,
-      filter: { type: { $eq: "waiter" }, waiterId: { $eq: waiterId } },
+      // filter: { type: { $eq: "waiter" }, waiterId: { $eq: waiterId } },
       includeMetadata: true,
     });
 
     const match = result.matches?.[0];
     const score = match?.score ?? 0;
     const isWaiter = score >= WAITER_MATCH_THRESHOLD;
-
+    console.log(isWaiter,"isWaiter>>>>>>>>>>>>>>");
     console.log(
       "[conversationDiarization] Pinecone result:",
       JSON.stringify({
