@@ -1,5 +1,9 @@
 import { pocService } from '../services/poc.service.js';
 import { enrollWaiterVoice } from '../services/waiterEnrollment.service.js';
+import {
+  enrollWaiterWithSpeechmatics,
+  convertToPcm,
+} from '../services/speechmaticsEnroll.service.js';
 import fs from 'fs';
 import path from 'path';
 import dotenv from "dotenv";
@@ -91,10 +95,47 @@ const waiterEnrollmentController = async (req, res) => {
   }
 };
 
+/** Speechmatics-only enrollment: get speaker_identifiers for use in real-time speaker identification */
+const speechmaticsEnrollController = async (req, res) => {
+  try {
+    if (!req.file || !req.file.buffer) {
+      return res.status(400).json({ success: false, error: "Audio file is required" });
+    }
+    const uploadsDir = path.join(process.cwd(), "uploads");
+    if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
+    const tempPath = path.join(uploadsDir, `enroll-${Date.now()}.webm`);
+    fs.writeFileSync(tempPath, req.file.buffer);
+    try {
+      const pcmBuffer = await convertToPcm(tempPath);
+      if (!pcmBuffer || pcmBuffer.length < 16000 * 2 * 3) {
+        return res.status(400).json({
+          success: false,
+          error: "Audio too short. Record at least 3 seconds for enrollment.",
+        });
+      }
+      const result = await enrollWaiterWithSpeechmatics(pcmBuffer);
+      return res.status(200).json({
+        success: true,
+        speaker_identifiers: result.speaker_identifiers,
+        label: result.label,
+      });
+    } finally {
+      // if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+    }
+  } catch (error) {
+    console.error("Speechmatics enrollment error:", error);
+    return res.status(500).json({
+      success: false,
+      error: error?.message || "Enrollment failed",
+    });
+  }
+};
+
 export const pocController = {
   testController,
   uploadController,
   analyseChat,
   reDiarizSagment,
   waiterEnrollmentController,
+  speechmaticsEnrollController,
 };

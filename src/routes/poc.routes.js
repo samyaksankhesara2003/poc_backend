@@ -12,6 +12,8 @@ router.post('/upload', multer().single('audio'), pocController.uploadController)
 
 router.post('/waiter-enrollment', multer({ storage: multer.memoryStorage() }).single('audio'), pocController.waiterEnrollmentController);
 
+router.post('/speechmatics-enroll', multer({ storage: multer.memoryStorage() }).single('audio'), pocController.speechmaticsEnrollController);
+
 router.post('/analysis', pocController.analyseChat)
 
 router.post('/rediarize-segment', pocController.reDiarizSagment)
