@@ -14,6 +14,7 @@ const server = http.createServer(app);
 // initAudioSocket(server);
 // initDynamicAudioSocket(server);
 handleSpeechMatrixConnection(server);
+
 // initPythonSocket(server);
 server.listen(PORT, () => {
   console.log(`🚀 Backend running on port ${PORT}`);

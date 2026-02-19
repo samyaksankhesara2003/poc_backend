@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon src/server.js",
+    "dev": "nodemon src/server2.js",
     "migrate:make": "knex --knexfile src/config/knex.js migrate:make",
     "migrate:latest": "knex --knexfile src/config/knex.js migrate:latest",
     "migrate:rollback": "knex --knexfile src/config/knex.js migrate:rollback",

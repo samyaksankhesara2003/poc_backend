@@ -2,7 +2,7 @@ import WebSocket from "ws";
 import dotenv from "dotenv";
 dotenv.config();
 
-export function createSpeechmaticsSocketModify(clientWs) {
+export function createSpeechmaticsSocketModify(clientWs, getSpeakerLabel) {
     const smWs = new WebSocket("wss://eu2.rt.speechmatics.com/v2", {
         headers: {
             Authorization: `Bearer ${process.env.SPEECHMATICS_API_KEY}`,
