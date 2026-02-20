@@ -59,7 +59,7 @@ export async function enrollWaiterVoice(audioBuffer, sessionId = null, originalN
     // console.log("[waiterEnrollment] Extracting speaker embedding from audio…");
     const embedding = await getEmbeddingFromFile(filePath);
     // console.log("[waiterEnrollment] Embedding extracted, dimension:", embedding.length);
-
+    
     const waiterId = `waiter-${sessionId || "session"}-${Date.now()}`;
     await storeWaiterVectorInPinecone(embedding, {
       sessionId: sessionId || waiterId,
