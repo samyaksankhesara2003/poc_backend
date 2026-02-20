@@ -21,7 +21,7 @@ export function createSpeechmaticsSocketModify(clientWs) {
                     sample_rate: 16000,
                 },
                 transcription_config: {
-                    language: "en",
+                    language: "es",
                     diarization: "speaker",
                     operating_point: "enhanced",
                     max_delay_mode: "fixed",
