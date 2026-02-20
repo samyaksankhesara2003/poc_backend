@@ -18,18 +18,30 @@ export function handleConversationWaiterConnection(server) {
     let waiterId = null;
     let configReceived = false;
 
-    let currentLabel = "waiter";
+    let currentLabel = "customer";
+    /** Last N decisions for majority vote – reduces flicker (e.g. one bad chunk won’t flip label). */
+    const RECENT_DECISIONS_MAX = 5;
+    const recentDecisions = [];
 
     let pcmAccumulator = Buffer.alloc(0);
     let processing = false;
 
+    function majorityWaiter() {
+      if (recentDecisions.length === 0) return false;
+      const t = recentDecisions.filter(Boolean).length;
+      return t > recentDecisions.length / 2;
+    }
 
     async function processChunk(chunk) {
       processing = true;
       try {
         // Step 1: Pinecone
-        const { isWaiter, score } = await matchAudioToWaiter(chunk, waiterId);
-        currentLabel = isWaiter ? "waiter" : "customer";
+        const { isWaiter } = await matchAudioToWaiter(chunk, waiterId);
+        recentDecisions.push(isWaiter);
+        if (recentDecisions.length > RECENT_DECISIONS_MAX) {
+          recentDecisions.shift();
+        }
+        currentLabel = majorityWaiter() ? "waiter" : "customer";
       } catch (err) {
         console.error("[ConversationWaiter] Pinecone diarization error:", err?.message);
       }

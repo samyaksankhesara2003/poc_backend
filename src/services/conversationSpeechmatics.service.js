@@ -29,7 +29,7 @@ export function createConversationSpeechmaticsSocket(clientWs, getCurrentLabel) 
           language: "en",
           operating_point: "enhanced",
           max_delay_mode: "flexible",
-          max_delay: 1,
+          max_delay: 6,
           enable_partials: true,
           enable_entities: true,
         },
