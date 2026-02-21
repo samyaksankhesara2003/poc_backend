@@ -4,7 +4,7 @@ export default {
         host: 'localhost',
         user: 'root',
         password: 'root1234',
-        database: 'poc'
+        database: 'poc_db'
     },
     migrations: {
         directory: "../migrations"

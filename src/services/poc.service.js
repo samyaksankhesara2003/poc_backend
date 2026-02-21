@@ -4,9 +4,13 @@ import path from "path";
 import { promisify } from "util";
 import dotenv from "dotenv";
 import OpenAI from "openai";
+import Waiter from "../models/Waiter.js";
 dotenv.config();
 
 import { Pinecone } from "@pinecone-database/pinecone";
+import Table from "../models/Table.js";
+import SessionModel from "../models/Session.js";
+import ConversationModel from "../models/Conversation.js";
 const pc = new Pinecone({
     apiKey: process.env.PINECONE_API_KEY,
 });
@@ -14,191 +18,126 @@ const namespace = pc.index(process.env.PINECONE_INDEX, process.env.PINECONE_HOST
 
 const execAsync = promisify(exec);
 
-const testService = async () => {
-    return { message: 'Test endpoint is working!' };
+const loginService = async (body) => {
+    const { email } = body;
+    const waiter = await Waiter.query()
+        .select('id', 'username', 'email', 'audio_path', 'created_at', 'updated_at')
+        .findOne({ email });
+    if (!waiter) {
+        return { message: 'Waiter not found', status: false };
+    }
+    return { message: 'Waiter found', status: true, data: waiter };
+};
+
+const UPLOAD_DIR = 'waiteraudio';
+
+/** Sanitize username for use in filename (no path chars, no empty) */
+function sanitizeUsername(username) {
+    if (!username || typeof username !== 'string') return 'waiter';
+    return username.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 64) || 'waiter';
 }
 
-const transcribeAudio = async (audioPath) => {
-    const outputDir = "outputs";
-    if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir);
+/**
+ * Save audio file to waiteraudio/waiterusername.ext and update waiter.audio_path by email.
+ * @param {{ buffer: Buffer, originalname: string }} file - multer file
+ * @param {{ username: string, email: string }} body
+ * @returns {{ message: string, user: object }}
+ */
+const uploadWaiterAudio = async (file, body) => {
+    const { username, email } = body;
+    if (!email) throw new Error('Email is required');
+    const waiter = await Waiter.query().findOne({ email });
+    if (!waiter) throw new Error('Waiter not found for this email');
 
-    // Check if file is already WAV format
-    const isWav = path.extname(audioPath).toLowerCase() === '.wav';
-    let wavPath = audioPath;
-
-    // Only convert if not already WAV
-    if (!isWav) {
-        wavPath = audioPath.replace(/\.[^.]+$/, '.wav');
-        const convertCommand = `ffmpeg -i "${audioPath}" -ar 16000 -ac 1 -c:a pcm_s16le "${wavPath}"`;
-
-        try {
-            await execAsync(convertCommand);
-            console.log('Audio converted successfully');
-        } catch (error) {
-            console.error('FFmpeg conversion error:', error);
-            throw new Error('Audio conversion failed');
+    // If waiter already has an audio sample, remove the old file so the new one replaces it
+    if (waiter.audio_path) {
+        const oldPath = path.isAbsolute(waiter.audio_path)
+            ? waiter.audio_path
+            : path.join(process.cwd(), waiter.audio_path);
+        if (fs.existsSync(oldPath)) {
+            fs.unlinkSync(oldPath);
         }
     }
 
-    const fileName = path.basename(wavPath, path.extname(wavPath));
-    const txtPath = path.join(outputDir, `${fileName}.txt`);
+    const ext = path.extname(file.originalname) || '.wav';
+    const safeName = sanitizeUsername(username);
+    const fileName = `${safeName}${ext}`;
 
-    const command = `/home/techuz/.local/bin/whisper "${wavPath}" --model small --language en --output_format txt --output_dir ${outputDir}`;
+    if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+    const filePath = path.join(UPLOAD_DIR, fileName);
+    fs.writeFileSync(filePath, file.buffer);
 
-    try {
-        const { stdout, stderr } = await execAsync(command);
-        console.log('Whisper transcription completed');
-    } catch (error) {
-        console.error('Whisper execution error:', error);
-        throw new Error('Whisper transcription failed');
-    }
+    const storedPath = `${UPLOAD_DIR}/${fileName}`;
+    await Waiter.query().findOne({ email }).patch({ audio_path: storedPath });
+    const updated = await Waiter.query()
+        .select('id', 'username', 'email', 'audio_path', 'created_at', 'updated_at')
+        .findOne({ email });
 
-    if (!fs.existsSync(txtPath)) {
-        throw new Error(`Whisper output not found: ${txtPath}`);
-    }
-
-    const text = fs.readFileSync(txtPath, "utf8");
-
-    // No cleanup - keep all files
-    console.log('Files saved:');
-    console.log('- Original audio:', audioPath);
-    if (!isWav) console.log('- Converted WAV:', wavPath);
-    console.log('- Transcription:', txtPath);
-
-    return text.trim();
+    return { message: 'Audio saved successfully', user: updated };
 };
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-const analyseChatService = async (text) => {
+const getTablesService = async () => {
     try {
-
-        const response = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
-            messages: [
-                {
-                    role: "system",
-                    content:
-                        "Analyze the following conversation and return JSON with tone, sentiment, intent, emotion, summary"
-                },
-                {
-                    role: "user",
-                    content: text
-                }
-            ],
-            response_format: { type: "json_object" }
-        });
-
-        return response.choices[0].message.content;
+        const tables = await Table.query().select('id', 'table_number');
+        return { message: 'Tables fetched successfully', data: tables };
     } catch (error) {
-        console.error('error in getting text')
+        throw new Error('Failed to fetch tables');
     }
-}
+};
 
-const reDiarizSagmentService = async (req, res) => {
-    try {
-        const { segment, context = [] } = req.body;
-
-        const recentContext = context
-            .map(s => `${s.speaker}: ${s.text}`)
-            .join('\n');
-
-        // -- first poc prompt 1st
-
-        const prompt = `You are analyzing a restaurant conversation between WAITER and CUSTOMER.
-
-        RECENT CONVERSATION:
-        ${recentContext || "No previous context"}
-
-        NEW SEGMENT:
-        "${segment.text}"
-
-        TASK: Determine who said this.
-
-        RULES:
-        - Waiters: greet, take orders, offer suggestions, serve
-        - Customers: order, ask questions, make requests
-
-        Respond with ONLY one word: "waiter" or "customer"`;
-
-
-        //-- second poc prompt 2nd
-        console.log(recentContext,"sam");
-
-        // const prompt = `You are a restaurant conversation analyst with 99% accuracy.
-
-        //                 CONVERSATION SO FAR:
-        //                 ${recentContext || "⚠️ FIRST UTTERANCE - Likely waiter greeting"}
-
-        //                 CURRENT SEGMENT:
-        //                 "${segment.text}"
-
-        //                 DECISION TREE:
-
-        //                 CHECK STRONG KEYWORDS:
-        //                 Waiter: "welcome", "recommend", "special", "I'll get", "how is everything"
-        //                 Customer: "I'll have", "can I get", menu item names, "check please"
-
-        //                 ANALYZE SENTENCE STRUCTURE:
-        //                 Waiter: Questions (offering), statements (informing), confirmations
-        //                 Customer: Requests (ordering), questions (asking), preferences (modifying)
-
-        //                 EXAMINE CONTEXT FLOW:
-        //                 - What was the previous speaker likely to say?
-        //                 - What response makes logical sense?
-        //                 - Who typically speaks in this sequence?
-
-        //                 SPECIAL CASES:
-        //                 "Thank you" → Check who's receiving (customer) vs providing (waiter)
-        //                 "Okay/Sure/Yes" → Follow conversation flow
-        //                 Food names alone → Customer ordering
-        //                 First utterance → 95% waiter
-
-        //                 COMMON WAITER PHRASES:
-        //                 "Can I get you started", "I'll be right back", "Let me check", "That comes with", 
-        //                 "Anything to drink", "Room for", "I'll grab", "How are we doing"
-
-        //                 COMMON CUSTOMER PHRASES:  
-        //                 "I'll do the", "Can we have", "What's in", "How spicy", "No [ingredient]",
-        //                 "To go please", "Can you split", "We're ready to order"
-
-        //                 ⚡ OUTPUT ONLY: "waiter" or "customer" (nothing else)`;
-
-
-        const response = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
-            messages: [
-                {
-                    role: "system",
-                    content: "You are a conversation analyst. Respond with only 'waiter' or 'customer'."
-                },
-                {
-                    role: "user",
-                    content: prompt
-                }
-            ],
-            max_tokens: 10,
-            temperature: 0.3,
-        });
-
-        const role = response.choices[0].message.content.trim().toLowerCase();
-
-        res.json({
-            corrected: {
-                speaker: role === "waiter" ? "waiter" : "customer",
-                text: segment.text,
-                originalSpeaker: segment.speaker,
-                confidence: "ai_corrected"
-            }
-        });
-        // const x = req.body
-        // return x;
-    } catch (error) {
-        console.error('error in catch', error)
+/**
+ * POST /poc/session body: unique_session_id, waiter_id, table_id, transcriptions (JSON), audio_path, status ('stop' | 'end')
+ * 1. Find or create session by unique_session_id.
+ * 2. If status 'end': update existing conversation for this session to status 'end' and transcriptions; or create one.
+ * 3. If status 'stop': create new conversation row (or upsert) with status 'stop'.
+ * Note: conversations.unique_session_id is unique, so one conversation row per session for now; we update it on 'end'.
+ */
+const createSessionService = async (body) => {
+    const { unique_session_id, waiter_id, table_id, transcriptions, audio_path, status } = body;
+    if (!unique_session_id || !waiter_id || !table_id || status === undefined) {
+        throw new Error('unique_session_id, waiter_id, table_id and status are required');
     }
-}
+
+    let session = await SessionModel.query().findOne({ unique_session_id });
+    if (!session) {
+        session = await SessionModel.query().insertAndFetch({
+            waiter_id: Number(waiter_id),
+            table_id: Number(table_id),
+            unique_session_id,
+        });
+    }
+
+    const transcriptionsArray = typeof transcriptions === 'string'
+        ? JSON.parse(transcriptions)
+        : (transcriptions || []);
+    // MySQL JSON column: pass string so Knex doesn't spread the array
+    const transcriptionsForDb = JSON.stringify(transcriptionsArray);
+
+    const conversationPayload = {
+        session_id: session.id,
+        unique_session_id,
+        audio_path: audio_path || `${unique_session_id}.wav`,
+        status: status === 'end' ? 'end' : 'stop',
+        transcriptions: transcriptionsForDb,
+    };
+    let conversation = await ConversationModel.query().findOne({ unique_session_id });
+    // if (conversation) {
+    //     await ConversationModel.query().findById(conversation.id).patch({
+    //         status: conversationPayload.status,
+    //         transcriptions: conversationPayload.transcriptions,
+    //         audio_path: conversationPayload.audio_path,
+    //     });
+    // } else {
+    //     await ConversationModel.query().insert(conversationPayload);
+    // }
+
+    await ConversationModel.query().insert(conversationPayload);
+
+    return { message: 'Session saved', session_id: session.id, status };
+};
 export const pocService = {
-    testService,
-    transcribeAudio,
-    analyseChatService,
-    reDiarizSagmentService
-}
+    loginService,
+    uploadWaiterAudio,
+    getTablesService,
+    createSessionService
+};

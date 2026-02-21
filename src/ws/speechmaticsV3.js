@@ -3,39 +3,56 @@ import { createSpeechmaticsSocketModify } from "../services/modifyspeechmatricsV
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import Waiter from "../models/Waiter.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const WAITER_PCM_PATH = path.resolve(
+const LEGACY_WAITER_PCM_PATH = path.resolve(
   __dirname,
   "../../recordings/recording.pcm",
 );
+const WAV_HEADER_BYTES = 44;
 
 // 20ms chunks at 16kHz 16-bit mono (640 bytes = 20ms)
 const PRIME_CHUNK_BYTES = 640;
 const PRIME_CHUNK_INTERVAL_MS = 20;
-
-// 800ms silence after prime — gives SM time to settle S1 voiceprint
-// before live audio begins. Adjust up if still getting S2 for waiter.
 const SILENCE_MS = 1000;
-const SILENCE_BUFFER = Buffer.alloc(SILENCE_MS * 32, 0); // 32 bytes/ms @ 16kHz 16-bit mono
+const SILENCE_BUFFER = Buffer.alloc(SILENCE_MS * 32, 0);
 
 const wss = new WebSocketServer({ noServer: true });
 
-wss.on("connection", (clientWs) => {
+function getWaiterEmailFromRequest(req) {
+  if (!req?.url) return null;
+  try {
+    const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
+    const email = url.searchParams.get("email");
+    return email && email.trim() ? email.trim() : null;
+  } catch {
+    return null;
+  }
+}
+
+function resolveWaiterAudioPath(audioPath) {
+  if (!audioPath || typeof audioPath !== "string") return null;
+  const absolute = path.isAbsolute(audioPath)
+    ? audioPath
+    : path.join(process.cwd(), audioPath);
+  return fs.existsSync(absolute) ? absolute : null;
+}
+
+wss.on("connection", (clientWs, req) => {
   console.log("🌐 Browser connected");
+  const waiterEmail = getWaiterEmailFromRequest(req);
 
   let priming = true;
   const smWs = createSpeechmaticsSocketModify(clientWs);
-
-  // Buffer live mic chunks that arrive DURING priming — drain after prime done
   const liveBuffer = [];
 
   smWs.once("open", () => {
     if (clientWs.readyState === clientWs.OPEN) {
       clientWs.send(JSON.stringify({ message: "PrimingStarted" }));
     }
-    primeWaiterVoice(smWs)
+    primeWaiterVoice(smWs, waiterEmail)
       .catch((err) => console.error("❌ Priming failed:", err.message))
       .finally(() => {
         console.log("✅ Priming done — flushing buffered live audio");
@@ -74,24 +91,42 @@ export function handleSpeechMatrixConnection() { }
 
 // ─── Priming ─────────────────────────────────────────────────────────────────
 
-async function primeWaiterVoice(smWs) {
-  if (!fs.existsSync(WAITER_PCM_PATH)) {
-    console.warn(
-      "⚠️  No waiter recording at",
-      WAITER_PCM_PATH,
-      "— skipping prime",
-    );
+async function primeWaiterVoice(smWs, waiterEmail) {
+  let pcmBuffer = null;
+  let sourceLabel = "";
+
+  if (waiterEmail) {
+    const waiter = await Waiter.query().select("audio_path").findOne({ email: waiterEmail });
+    if (waiter?.audio_path) {
+      const absolutePath = resolveWaiterAudioPath(waiter.audio_path);
+      if (absolutePath) {
+        const raw = fs.readFileSync(absolutePath);
+        const ext = path.extname(absolutePath).toLowerCase();
+        if (ext === ".wav" && raw.length > WAV_HEADER_BYTES) {
+          pcmBuffer = raw.subarray(WAV_HEADER_BYTES);
+          sourceLabel = `waiter WAV (${path.basename(absolutePath)})`;
+        } else {
+          pcmBuffer = raw;
+          sourceLabel = `waiter file (${path.basename(absolutePath)})`;
+        }
+      }
+    }
+  }
+
+  if (!pcmBuffer && fs.existsSync(LEGACY_WAITER_PCM_PATH)) {
+    pcmBuffer = fs.readFileSync(LEGACY_WAITER_PCM_PATH);
+    sourceLabel = "legacy recording.pcm";
+  }
+
+  if (!pcmBuffer || pcmBuffer.length === 0) {
+    console.warn("⚠️  No waiter audio for priming — skipping");
     return;
   }
 
-  const pcmData = fs.readFileSync(WAITER_PCM_PATH);
   console.log(
-    `🎙 Priming waiter voice: ${pcmData.length} bytes (~${(pcmData.length / 32000).toFixed(1)}s)`,
+    `🎙 Priming with ${sourceLabel}: ${pcmBuffer.length} bytes (~${(pcmBuffer.length / 32000).toFixed(1)}s)`,
   );
-
-  await streamPcmRealtime(smWs, pcmData);
-
-  // Short silence so SM can settle the S1 voiceprint before live audio hits
+  await streamPcmRealtime(smWs, Buffer.from(pcmBuffer));
   await sendSilence(smWs);
   console.log("🟢 Waiter PCM + silence sent — live stream taking over");
 }

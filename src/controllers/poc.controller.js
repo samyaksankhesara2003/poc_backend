@@ -1,79 +1,61 @@
 import { pocService } from '../services/poc.service.js';
-import fs from 'fs';
-import path from 'path';
 import dotenv from "dotenv";
-import OpenAI from 'openai';
 dotenv.config();
 
-
-// const openAi = new OpenAI({})
-const testController = async (req, res) => {
+const loginController = async (req, res) => {
   try {
-    const data = await pocService.testService();
+    const data = await pocService.loginService(req.body);
     res.status(200).json(data);
-  }
-  catch (error) {
+  } catch (error) {
     res.status(500).json({ error: 'Internal Server Error' });
   }
-}
+};
 
 const uploadController = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ error: "Audio file is required" });
+      return res.status(400).json({ error: 'Audio file is required' });
     }
-
-    const uploadsDir = "uploads";
-    if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
-
-    const audioPath = path.join(
-      uploadsDir,
-      `${Date.now()}-${req.file.originalname}`
-    );
-
-    fs.writeFileSync(audioPath, req.file.buffer);
-
-    const text = await pocService.transcribeAudio(audioPath);
-
-    console.log('Transcription result:', text);
-
-    res.json({ success: true, text });
+    const { username, email } = req.body || {};
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+    const result = await pocService.uploadWaiterAudio(req.file, {
+      username: username || '',
+      email,
+    });
+    res.json(result);
   } catch (error) {
     console.error('Upload controller error:', error);
-    res.status(500).json({ error: "Transcription failed" });
+    const message = error.message || 'Upload failed';
+    const status = message.includes('not found') ? 404 : 500;
+    res.status(status).json({ error: message });
   }
 };
 
-const analyseChat = async (req, res) => {
+const getTablesController = async (req, res) => {
   try {
-    const { text } = req.body
-    const data = await pocService.analyseChatService(text)
-    console.log(data);
-
-    res.json({ success: true, data })
+    const data = await pocService.getTablesService();
+    res.status(200).json(data);
   } catch (error) {
-    console.error('Upload controller error:', error);
-    res.status(500).json({ error: "Transcription failed" });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 }
 
-const reDiarizSagment = async (req, res) => {
+const createSessionController = async (req, res) => {
   try {
-    
-
-    // const data = 
-    await pocService.reDiarizSagmentService(req,res)
-
-    // res.json({ success: true, data })
+    const data = await pocService.createSessionService(req.body);
+    res.status(200).json(data);
   } catch (error) {
-    console.error('Upload controller error:', error);
-    res.status(500).json({ error: "Transcription failed" });
+    console.error('createSessionController error:', error);
+    res.status(500).json({
+      error: error.message || 'Internal Server Error',
+    });
   }
 }
-
 export const pocController = {
-  testController,
+  loginController,
   uploadController,
-  analyseChat,
-  reDiarizSagment
+  getTablesController,
+  createSessionController
 }
