@@ -76,6 +76,29 @@ const uploadWaiterAudio = async (file, body) => {
     return { message: 'Audio saved successfully', user: updated };
 };
 
+const SESSION_CONVERSATION_DIR = 'sessionConservation';
+
+/**
+ * POST /poc/upload-conversation: multipart 'audio' file + body unique_session_id.
+ * Saves to sessionConservation/unique_session_id_timestamp.ext
+ * Returns { audio_path: 'sessionConservation/unique_session_id_timestamp.wav' }
+ */
+const uploadConversationAudio = async (file, unique_session_id) => {
+    if (!file || !file.buffer || !unique_session_id) {
+        throw new Error('Audio file and unique_session_id are required');
+    }
+    const ext = path.extname(file.originalname) || '.wav';
+    const timestamp = Date.now();
+    const fileName = `${unique_session_id}_${timestamp}${ext}`;
+    if (!fs.existsSync(SESSION_CONVERSATION_DIR)) {
+        fs.mkdirSync(SESSION_CONVERSATION_DIR, { recursive: true });
+    }
+    const filePath = path.join(SESSION_CONVERSATION_DIR, fileName);
+    fs.writeFileSync(filePath, file.buffer);
+    const audio_path = `${SESSION_CONVERSATION_DIR}/${fileName}`;
+    return { audio_path };
+};
+
 const getTablesService = async () => {
     try {
         const tables = await Table.query().select('id', 'table_number');
@@ -138,6 +161,7 @@ const createSessionService = async (body) => {
 export const pocService = {
     loginService,
     uploadWaiterAudio,
+    uploadConversationAudio,
     getTablesService,
-    createSessionService
+    createSessionService,
 };

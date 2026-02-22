@@ -42,6 +42,23 @@ const getTablesController = async (req, res) => {
   }
 }
 
+const uploadConversationController = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Audio file is required' });
+    }
+    const unique_session_id = req.body?.unique_session_id;
+    if (!unique_session_id) {
+      return res.status(400).json({ error: 'unique_session_id is required' });
+    }
+    const data = await pocService.uploadConversationAudio(req.file, unique_session_id);
+    res.status(200).json(data);
+  } catch (error) {
+    console.error('uploadConversationController error:', error);
+    res.status(500).json({ error: error.message || 'Upload failed' });
+  }
+};
+
 const createSessionController = async (req, res) => {
   try {
     const data = await pocService.createSessionService(req.body);
@@ -52,10 +69,11 @@ const createSessionController = async (req, res) => {
       error: error.message || 'Internal Server Error',
     });
   }
-}
+};
 export const pocController = {
   loginController,
   uploadController,
+  uploadConversationController,
   getTablesController,
-  createSessionController
-}
+  createSessionController,
+};

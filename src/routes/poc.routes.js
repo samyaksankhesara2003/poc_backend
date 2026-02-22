@@ -5,6 +5,7 @@ const router = Router();
 
 router.post('/login', pocController.loginController);
 router.post('/upload', multer().single('audio'), pocController.uploadController);
+router.post('/upload-conversation', multer().single('audio'), pocController.uploadConversationController);
 router.get('/tables', pocController.getTablesController);
 router.post('/session', pocController.createSessionController);
 export default router;
