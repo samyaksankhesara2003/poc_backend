@@ -17,6 +17,7 @@
   "description": "",
   "dependencies": {
     "@deepgram/sdk": "^4.11.3",
+    "@huggingface/transformers": "^3.8.1",
     "@pinecone-database/pinecone": "^7.0.0",
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
@@ -25,6 +26,7 @@
     "multer": "^2.0.2",
     "mysql2": "^3.16.2",
     "objection": "^3.1.5",
+    "onnxruntime-node": "^1.20.0",
     "openai": "^6.17.0",
     "socket.io": "^4.8.3",
     "speechmatics": "^4.0.1",

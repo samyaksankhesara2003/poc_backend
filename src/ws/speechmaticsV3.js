@@ -1,5 +1,6 @@
 import { WebSocketServer } from "ws";
 import { createSpeechmaticsSocketModify } from "../services/modifyspeechmatricsV2.service.js";
+import { toneService } from "../services/tone.service.js";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -18,6 +19,10 @@ const PRIME_CHUNK_BYTES = 640;
 const PRIME_CHUNK_INTERVAL_MS = 20;
 const SILENCE_MS = 1000;
 const SILENCE_BUFFER = Buffer.alloc(SILENCE_MS * 32, 0);
+
+// 16kHz 16-bit mono: 32000 bytes per second
+const BYTES_PER_SECOND = 32000;
+const PCM_BUFFER_RETENTION_SEC = 120;
 
 const wss = new WebSocketServer({ noServer: true });
 
@@ -45,7 +50,77 @@ wss.on("connection", (clientWs, req) => {
   const waiterEmail = getWaiterEmailFromRequest(req);
 
   let priming = true;
-  const smWs = createSpeechmaticsSocketModify(clientWs);
+  const pcmChunks = [];
+  let streamTimeSec = 0;
+
+  function getAudioSlice(startTimeSec, endTimeSec) {
+    if (startTimeSec >= endTimeSec || pcmChunks.length === 0) return null;
+    const parts = [];
+    for (const { startTime, data } of pcmChunks) {
+      const chunkEndTime = startTime + data.length / BYTES_PER_SECOND;
+      if (chunkEndTime <= startTimeSec || startTime >= endTimeSec) continue;
+      const sliceStartByte = Math.max(0, Math.floor((startTimeSec - startTime) * BYTES_PER_SECOND));
+      const sliceEndByte = Math.min(data.length, Math.ceil((endTimeSec - startTime) * BYTES_PER_SECOND));
+      if (sliceEndByte > sliceStartByte) parts.push(Buffer.from(data.subarray(sliceStartByte, sliceEndByte)));
+    }
+    return parts.length ? Buffer.concat(parts) : null;
+  }
+
+  function appendPcm(chunk) {
+    const startTime = streamTimeSec;
+    streamTimeSec += chunk.length / BYTES_PER_SECOND;
+    pcmChunks.push({ startTime, data: Buffer.from(chunk) });
+    while (pcmChunks.length > 0 && streamTimeSec - pcmChunks[0].startTime > PCM_BUFFER_RETENTION_SEC) {
+      pcmChunks.shift();
+    }
+  }
+
+  async function onAddTranscript(ws, message, getSlice) {
+    const results = message.results;
+    const metadata = message.metadata || {};
+    if (!results || !Array.isArray(results)) return;
+
+    const bySpeaker = new Map();
+    for (const r of results) {
+      const speaker = r.alternatives?.[0]?.speaker || "S1";
+      const content = r.alternatives?.[0]?.content;
+      const start = r.start_time ?? metadata.start_time;
+      const end = r.end_time ?? metadata.end_time;
+      if (content == null) continue;
+      if (!bySpeaker.has(speaker)) bySpeaker.set(speaker, { start, end, parts: [] });
+      const seg = bySpeaker.get(speaker);
+      seg.start = Math.min(seg.start, start);
+      seg.end = Math.max(seg.end, end);
+      seg.parts.push(content);
+    }
+
+    for (const [speaker, { start, end, parts }] of bySpeaker) {
+      const text = parts.join(" ").trim();
+      if (!text) continue;
+      const audioChunk = getSlice(start, end);
+      try {
+        const { tone, emotion, textSentiment } = await toneService.runTonePipeline(audioChunk, text);
+        
+        if (ws.readyState === ws.OPEN) {
+          ws.send(JSON.stringify({
+            message: "ToneUpdate",
+            speaker,
+            tone,
+            emotion,
+            textSentiment,
+            text: text.slice(0, 80),
+          }));
+        }
+      } catch (err) {
+        console.error("Tone pipeline error:", err.message);
+      }
+    }
+  }
+
+  const smWs = createSpeechmaticsSocketModify(clientWs, {
+    getAudioSlice: getAudioSlice,
+    onAddTranscript: onAddTranscript,
+  });
   const liveBuffer = [];
 
   smWs.once("open", () => {
@@ -61,6 +136,7 @@ wss.on("connection", (clientWs, req) => {
           clientWs.send(JSON.stringify({ message: "PrimingComplete" }));
         }
         for (const chunk of liveBuffer) {
+          appendPcm(chunk);
           if (smWs.readyState === smWs.OPEN) smWs.send(chunk);
         }
         liveBuffer.length = 0;
@@ -70,8 +146,9 @@ wss.on("connection", (clientWs, req) => {
   clientWs.on("message", (audioChunk) => {
     if (priming) {
       liveBuffer.push(audioChunk);
-    } else if (smWs.readyState === smWs.OPEN) {
-      smWs.send(audioChunk);
+    } else {
+      appendPcm(audioChunk);
+      if (smWs.readyState === smWs.OPEN) smWs.send(audioChunk);
     }
   });
 

@@ -2,7 +2,13 @@ import WebSocket from "ws";
 import dotenv from "dotenv";
 dotenv.config();
 
-export function createSpeechmaticsSocketModify(clientWs) {
+/**
+ * @param {WebSocket} clientWs - browser WebSocket
+ * @param {{ getAudioSlice?: (startTimeSec: number, endTimeSec: number) => Buffer | null, onAddTranscript?: (clientWs: WebSocket, message: object) => void | Promise<void> }} [options]
+ */
+export function createSpeechmaticsSocketModify(clientWs, options = {}) {
+    const { getAudioSlice, onAddTranscript } = options;
+
     const smWs = new WebSocket("wss://eu2.rt.speechmatics.com/v2", {
         headers: {
             Authorization: `Bearer ${process.env.SPEECHMATICS_API_KEY}`,
@@ -43,6 +49,11 @@ export function createSpeechmaticsSocketModify(clientWs) {
 
             if (message.message === "AddTranscript") {
                 clientWs.send(JSON.stringify(message));
+                if (onAddTranscript && getAudioSlice) {
+                    Promise.resolve(onAddTranscript(clientWs, message, getAudioSlice)).catch((err) =>
+                        console.error("onAddTranscript error:", err)
+                    );
+                }
             }
 
             if (message.message === "EndOfTranscript") {
