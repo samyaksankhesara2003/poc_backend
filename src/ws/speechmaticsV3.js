@@ -4,6 +4,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import Waiter from "../models/Waiter.js";
+import storageService from "../services/minio.service.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -32,6 +33,7 @@ function getWaiterEmailFromRequest(req) {
   }
 }
 
+/* ─── Previous: load waiter audio from local filesystem ───
 function resolveWaiterAudioPath(audioPath) {
   if (!audioPath || typeof audioPath !== "string") return null;
   const absolute = path.isAbsolute(audioPath)
@@ -39,6 +41,7 @@ function resolveWaiterAudioPath(audioPath) {
     : path.join(process.cwd(), audioPath);
   return fs.existsSync(absolute) ? absolute : null;
 }
+*/
 
 wss.on("connection", (clientWs, req) => {
   console.log("🌐 Browser connected");
@@ -91,6 +94,25 @@ export function handleSpeechMatrixConnection() { }
 
 // ─── Priming ─────────────────────────────────────────────────────────────────
 
+/**
+ * Load waiter audio from MinIO using downloadAudioBuffer (key e.g. waiteraudio/samyak.wav).
+ * Returns { pcmBuffer, sourceLabel } or { pcmBuffer: null } on failure.
+ */
+async function loadWaiterAudioFromMinio(audioPath) {
+  if (!audioPath || typeof audioPath !== "string") return { pcmBuffer: null };
+  const raw = await storageService.downloadAudioBuffer(audioPath);
+  if (!raw || raw.length === 0) return { pcmBuffer: null };
+  const ext = path.extname(audioPath).toLowerCase();
+  const name = path.basename(audioPath);
+  if (ext === ".wav" && raw.length > WAV_HEADER_BYTES) {
+    return {
+      pcmBuffer: raw.subarray(WAV_HEADER_BYTES),
+      sourceLabel: `waiter WAV (${name})`,
+    };
+  }
+  return { pcmBuffer: raw, sourceLabel: `waiter file (${name})` };
+}
+
 async function primeWaiterVoice(smWs, waiterEmail) {
   let pcmBuffer = null;
   let sourceLabel = "";
@@ -98,28 +120,18 @@ async function primeWaiterVoice(smWs, waiterEmail) {
   if (waiterEmail) {
     const waiter = await Waiter.query().select("audio_path").findOne({ email: waiterEmail });
     if (waiter?.audio_path) {
-      const absolutePath = resolveWaiterAudioPath(waiter.audio_path);
-      if (absolutePath) {
-        const raw = fs.readFileSync(absolutePath);
-        const ext = path.extname(absolutePath).toLowerCase();
-        if (ext === ".wav" && raw.length > WAV_HEADER_BYTES) {
-          pcmBuffer = raw.subarray(WAV_HEADER_BYTES);
-          sourceLabel = `waiter WAV (${path.basename(absolutePath)})`;
-        } else {
-          pcmBuffer = raw;
-          sourceLabel = `waiter file (${path.basename(absolutePath)})`;
-        }
+      const result = await loadWaiterAudioFromMinio(waiter.audio_path);
+      console.log(result.pcmBuffer,"result>>>>>>>>>>>>>>");
+      
+      if (result.pcmBuffer) {
+        pcmBuffer = result.pcmBuffer;
+        sourceLabel = result.sourceLabel;
       }
     }
   }
 
-  if (!pcmBuffer && fs.existsSync(LEGACY_WAITER_PCM_PATH)) {
-    pcmBuffer = fs.readFileSync(LEGACY_WAITER_PCM_PATH);
-    sourceLabel = "legacy recording.pcm";
-  }
-
   if (!pcmBuffer || pcmBuffer.length === 0) {
-    console.warn("⚠️  No waiter audio for priming — skipping");
+    console.warn("⚠️  No waiter audio for priming (MinIO) — skipping");
     return;
   }
 
@@ -130,6 +142,41 @@ async function primeWaiterVoice(smWs, waiterEmail) {
   await sendSilence(smWs);
   console.log("🟢 Waiter PCM + silence sent — live stream taking over");
 }
+
+// ─── Previous priming: load from local filesystem via resolveWaiterAudioPath ───
+// async function primeWaiterVoice(smWs, waiterEmail) {
+//   let pcmBuffer = null;
+//   let sourceLabel = "";
+//   if (waiterEmail) {
+//     const waiter = await Waiter.query().select("audio_path").findOne({ email: waiterEmail });
+//     if (waiter?.audio_path) {
+//       const absolutePath = resolveWaiterAudioPath(waiter.audio_path);
+//       if (absolutePath) {
+//         const raw = fs.readFileSync(absolutePath);
+//         const ext = path.extname(absolutePath).toLowerCase();
+//         if (ext === ".wav" && raw.length > WAV_HEADER_BYTES) {
+//           pcmBuffer = raw.subarray(WAV_HEADER_BYTES);
+//           sourceLabel = `waiter WAV (${path.basename(absolutePath)})`;
+//         } else {
+//           pcmBuffer = raw;
+//           sourceLabel = `waiter file (${path.basename(absolutePath)})`;
+//         }
+//       }
+//     }
+//   }
+//   if (!pcmBuffer && fs.existsSync(LEGACY_WAITER_PCM_PATH)) {
+//     pcmBuffer = fs.readFileSync(LEGACY_WAITER_PCM_PATH);
+//     sourceLabel = "legacy recording.pcm";
+//   }
+//   if (!pcmBuffer || pcmBuffer.length === 0) {
+//     console.warn("⚠️  No waiter audio for priming — skipping");
+//     return;
+//   }
+//   console.log(`🎙 Priming with ${sourceLabel}: ...`);
+//   await streamPcmRealtime(smWs, Buffer.from(pcmBuffer));
+//   await sendSilence(smWs);
+//   console.log("🟢 Waiter PCM + silence sent — live stream taking over");
+// }
 
 function streamPcmRealtime(smWs, pcmBuffer) {
   return new Promise((resolve, reject) => {

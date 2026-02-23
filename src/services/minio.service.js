@@ -44,6 +44,23 @@ class ObjectStorage {
         return Buffer.concat(chunks);
     }
 
+    /**
+     * Download an audio file from MinIO by key (e.g. waiteraudio/samyak.wav).
+     * Uses downloadBuffer under the hood.
+     * @param {string} key - Object key (e.g. waiteraudio/samyak.wav)
+     * @returns {Promise<Buffer|null>} File buffer or null on failure
+     */
+    async downloadAudioBuffer(key) {
+        if (!key || typeof key !== "string") return null;
+        try {
+            const buffer = await this.downloadBuffer(key);
+            return buffer && buffer.length > 0 ? buffer : null;
+        } catch (err) {
+            console.warn("[MinIO] downloadAudioBuffer failed:", key, err?.message);
+            return null;
+        }
+    }
+
     /* ================= DOWNLOAD STREAM ================= */
 
     async downloadStream(key) {
@@ -52,10 +69,10 @@ class ObjectStorage {
 
     /* ================= DELETE OBJECT ================= */
 
-async deleteObject(key) {
-    await this.client.removeObject(this.bucket, key);
-    return key;
-}
+    async deleteObject(key) {
+        await this.client.removeObject(this.bucket, key);
+        return key;
+    }
 }
 
 

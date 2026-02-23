@@ -38,50 +38,102 @@ function sanitizeUsername(username) {
     return username.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 64) || 'waiter';
 }
 
+/** Prefix for MinIO-stored paths in DB. Value in audio_path is "minio:<key>". */
+const MINIO_PATH_PREFIX = 'minio:';
+
 /**
- * Save audio file to waiteraudio/waiterusername.ext and update waiter.audio_path by email.
+ * Upload waiter audio to MinIO and store the MinIO key in waiter.audio_path (minio:<key>).
+ * Old MinIO object is deleted if it existed; local file is not used.
  * @param {{ buffer: Buffer, originalname: string }} file - multer file
  * @param {{ username: string, email: string }} body
  * @returns {{ message: string, user: object }}
  */
+
 const uploadWaiterAudio = async (file, body) => {
     const { username, email } = body;
-    if (!email) throw new Error('Email is required');
-    const waiter = await Waiter.query().findOne({ email });
-    if (!waiter) throw new Error('Waiter not found for this email');
 
-    // If waiter already has an audio sample, remove the old file so the new one replaces it
+    if (!email) {
+        throw new Error('Email is required');
+    }
+
+    const waiter = await Waiter.query().findOne({ email });
+    if (!waiter) {
+        throw new Error('Waiter not found for this email');
+    }
+
+    // Delete old audio if it exists
     if (waiter.audio_path) {
-        const oldPath = path.isAbsolute(waiter.audio_path)
-            ? waiter.audio_path
-            : path.join(process.cwd(), waiter.audio_path);
-        if (fs.existsSync(oldPath)) {
-            fs.unlinkSync(oldPath);
+        try {
+            await storageService.deleteObject(waiter.audio_path);
+        } catch (err) {
+            console.warn(
+                '[uploadWaiterAudio] Failed to delete old MinIO object:',
+                err?.message
+            );
         }
     }
 
     const ext = path.extname(file.originalname) || '.wav';
     const safeName = sanitizeUsername(username);
-    const fileName = `${safeName}${ext}`;
-    console.log(fileName, "fileName>>>>>>>>>>>>>>");
 
-    if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-    const filePath = path.join(UPLOAD_DIR, fileName);
-    fs.writeFileSync(filePath, file.buffer);
+    // REQUIRED FORMAT: waiteraudio/savan.wav
+    const objectKey = `waiteraudio/${safeName}${ext}`;
 
-    //minio service 
-    const storageKey = await storageService.uploadBuffer(fileName, file.buffer);
-    console.log(storageKey,"storageKey>>>>>>>>>>>>>>");
-    
+    // Upload to MinIO
+    await storageService.uploadBuffer(objectKey, file.buffer);
 
-    const storedPath = `${UPLOAD_DIR}/${fileName}`;
-    await Waiter.query().findOne({ email }).patch({ audio_path: storedPath });
+    // Save ONLY the object key
+    await Waiter.query()
+        .findOne({ email })
+        .patch({ audio_path: objectKey });
+
     const updated = await Waiter.query()
-        .select('id', 'username', 'email', 'audio_path', 'created_at', 'updated_at')
+        .select(
+            'id',
+            'username',
+            'email',
+            'audio_path',
+            'created_at',
+            'updated_at'
+        )
         .findOne({ email });
 
-    return { message: 'Audio saved successfully', user: updated };
+    return {
+        message: 'Audio saved successfully',
+        user: updated,
+    };
 };
+
+// ─── Previous implementation (local + MinIO, DB stored local path) ───
+
+// const uploadWaiterAudio = async (file, body) => {
+//     const { username, email } = body;
+//     if (!email) throw new Error('Email is required');
+//     const waiter = await Waiter.query().findOne({ email });
+//     if (!waiter) throw new Error('Waiter not found for this email');
+//     if (waiter.audio_path) {
+//         const oldPath = path.isAbsolute(waiter.audio_path)
+//             ? waiter.audio_path
+//             : path.join(process.cwd(), waiter.audio_path);
+//         if (fs.existsSync(oldPath)) {
+//             fs.unlinkSync(oldPath);
+//         }
+//     }
+//     const ext = path.extname(file.originalname) || '.wav';
+//     const safeName = sanitizeUsername(username);
+//     const fileName = `${safeName}${ext}`;
+//     if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+//     const filePath = path.join(UPLOAD_DIR, fileName);
+//     fs.writeFileSync(filePath, file.buffer);
+//     const storageKey = await storageService.uploadBuffer(fileName, file.buffer);
+//     const storedPath = `${UPLOAD_DIR}/${fileName}`;
+//     await Waiter.query().findOne({ email }).patch({ audio_path: storedPath });
+//     const updated = await Waiter.query()
+//         .select('id', 'username', 'email', 'audio_path', 'created_at', 'updated_at')
+//         .findOne({ email });
+//     return { message: 'Audio saved successfully', user: updated };
+// };
+
 
 const SESSION_CONVERSATION_DIR = 'sessionConservation';
 
