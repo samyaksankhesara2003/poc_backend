@@ -24,6 +24,8 @@ const MIN_AUDIO_SEC = parseFloat(process.env.DIARIZATION_MIN_AUDIO_SEC || "1.5")
  * - Requires both threshold and a score gap for higher accuracy.
  */
 export async function matchAudioToWaiter(pcmBuffer, waiterId) {
+  console.log(waiterId,"waiterId>>>>>>>>>>>>>>");
+  
   if (!pcmBuffer || pcmBuffer.length === 0 || !waiterId) {
     return { isWaiter: false, score: 0 };
   }
@@ -47,6 +49,8 @@ export async function matchAudioToWaiter(pcmBuffer, waiterId) {
     if (matches.length === 0) {
       return { isWaiter: false, score: 0 };
     }
+    console.log(matches,"matches>>>>>>>>>>>>>>");
+    
 
     // Split: this waiter (waiterId) vs other waiter vectors (other sessions/people)
     const thisScores = [];
@@ -76,15 +80,15 @@ export async function matchAudioToWaiter(pcmBuffer, waiterId) {
     const isWaiter =
       waiterScore >= WAITER_MATCH_THRESHOLD && scoreGap >= WAITER_MIN_SCORE_GAP;
 
-    console.log("[conversationDiarization]", {
-      waiterScore: waiterScore.toFixed(3),
-      bestOtherScore: bestOtherScore.toFixed(3),
-      gap: scoreGap.toFixed(3),
-      threshold: WAITER_MATCH_THRESHOLD,
-      minGap: WAITER_MIN_SCORE_GAP,
-      decision: isWaiter ? "waiter" : "customer",
-      audioSec: Math.round(audioSec * 10) / 10,
-    });
+    // console.log("[conversationDiarization]", {
+    //   waiterScore: waiterScore.toFixed(3),
+    //   bestOtherScore: bestOtherScore.toFixed(3),
+    //   gap: scoreGap.toFixed(3),
+    //   threshold: WAITER_MATCH_THRESHOLD,
+    //   minGap: WAITER_MIN_SCORE_GAP,
+    //   decision: isWaiter ? "waiter" : "customer",
+    //   audioSec: Math.round(audioSec * 10) / 10,
+    // });
 
     return {
       isWaiter,
