@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import OpenAI from "openai";
 import Waiter from "../models/Waiter.js";
 dotenv.config();
+import storageService from "./minio.service.js";
 
 import { Pinecone } from "@pinecone-database/pinecone";
 import Table from "../models/Table.js";
@@ -62,10 +63,16 @@ const uploadWaiterAudio = async (file, body) => {
     const ext = path.extname(file.originalname) || '.wav';
     const safeName = sanitizeUsername(username);
     const fileName = `${safeName}${ext}`;
+    console.log(fileName, "fileName>>>>>>>>>>>>>>");
 
     if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
     const filePath = path.join(UPLOAD_DIR, fileName);
     fs.writeFileSync(filePath, file.buffer);
+
+    //minio service 
+    const storageKey = await storageService.uploadBuffer(fileName, file.buffer);
+    console.log(storageKey,"storageKey>>>>>>>>>>>>>>");
+    
 
     const storedPath = `${UPLOAD_DIR}/${fileName}`;
     await Waiter.query().findOne({ email }).patch({ audio_path: storedPath });
