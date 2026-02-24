@@ -12,10 +12,10 @@ import { Pinecone } from "@pinecone-database/pinecone";
 import Table from "../models/Table.js";
 import SessionModel from "../models/Session.js";
 import ConversationModel from "../models/Conversation.js";
-const pc = new Pinecone({
-    apiKey: process.env.PINECONE_API_KEY,
-});
-const namespace = pc.index(process.env.PINECONE_INDEX, process.env.PINECONE_HOST).namespace(process.env.PINECONE_NAMESPACE);
+// const pc = new Pinecone({
+//     apiKey: process.env.PINECONE_API_KEY,
+// });
+// const namespace = pc.index(process.env.PINECONE_INDEX, process.env.PINECONE_HOST).namespace(process.env.PINECONE_NAMESPACE);
 
 const execAsync = promisify(exec);
 
@@ -37,10 +37,6 @@ function sanitizeUsername(username) {
     if (!username || typeof username !== 'string') return 'waiter';
     return username.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 64) || 'waiter';
 }
-
-/** Prefix for MinIO-stored paths in DB. Value in audio_path is "minio:<key>". */
-const MINIO_PATH_PREFIX = 'minio:';
-
 /**
  * Upload waiter audio to MinIO and store the MinIO key in waiter.audio_path (minio:<key>).
  * Old MinIO object is deleted if it existed; local file is not used.
@@ -49,6 +45,8 @@ const MINIO_PATH_PREFIX = 'minio:';
  * @returns {{ message: string, user: object }}
  */
 
+
+//-- upload waiter audio to minio
 const uploadWaiterAudio = async (file, body) => {
     const { username, email } = body;
 
@@ -61,7 +59,6 @@ const uploadWaiterAudio = async (file, body) => {
         throw new Error('Waiter not found for this email');
     }
 
-    // Delete old audio if it exists
     if (waiter.audio_path) {
         try {
             await storageService.deleteObject(waiter.audio_path);
@@ -76,13 +73,10 @@ const uploadWaiterAudio = async (file, body) => {
     const ext = path.extname(file.originalname) || '.wav';
     const safeName = sanitizeUsername(username);
 
-    // REQUIRED FORMAT: waiteraudio/savan.wav
     const objectKey = `waiteraudio/${safeName}${ext}`;
 
-    // Upload to MinIO
     await storageService.uploadBuffer(objectKey, file.buffer);
 
-    // Save ONLY the object key
     await Waiter.query()
         .findOne({ email })
         .patch({ audio_path: objectKey });
@@ -104,8 +98,7 @@ const uploadWaiterAudio = async (file, body) => {
     };
 };
 
-// ─── Previous implementation (local + MinIO, DB stored local path) ───
-
+// ─── Previous implementation (local) ───
 // const uploadWaiterAudio = async (file, body) => {
 //     const { username, email } = body;
 //     if (!email) throw new Error('Email is required');
@@ -125,7 +118,6 @@ const uploadWaiterAudio = async (file, body) => {
 //     if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 //     const filePath = path.join(UPLOAD_DIR, fileName);
 //     fs.writeFileSync(filePath, file.buffer);
-//     const storageKey = await storageService.uploadBuffer(fileName, file.buffer);
 //     const storedPath = `${UPLOAD_DIR}/${fileName}`;
 //     await Waiter.query().findOne({ email }).patch({ audio_path: storedPath });
 //     const updated = await Waiter.query()
@@ -137,11 +129,21 @@ const uploadWaiterAudio = async (file, body) => {
 
 const SESSION_CONVERSATION_DIR = 'sessionConservation';
 
-/**
- * POST /poc/upload-conversation: multipart 'audio' file + body unique_session_id.
- * Saves to sessionConservation/unique_session_id_timestamp.ext
- * Returns { audio_path: 'sessionConservation/unique_session_id_timestamp.wav' }
- */
+// minio upload file function
+const uploadConversationAudio = async (file, unique_session_id) => {
+    if (!file || !file.buffer || !unique_session_id) {
+        throw new Error('Audio file and unique_session_id are required');
+    }
+    const ext = path.extname(file.originalname) || '.wav';
+    const timestamp = Date.now();
+    const fileName = `${unique_session_id}_${timestamp}${ext}`;
+    const objectKey = `${SESSION_CONVERSATION_DIR}/${fileName}`;
+    await storageService.uploadBuffer(objectKey, file.buffer);
+    return { audio_path: objectKey };
+};
+
+/* ─── Previous: save conversation audio to local filesystem ───
+const SESSION_CONVERSATION_DIR = 'sessionConservation';
 const uploadConversationAudio = async (file, unique_session_id) => {
     if (!file || !file.buffer || !unique_session_id) {
         throw new Error('Audio file and unique_session_id are required');
@@ -157,6 +159,7 @@ const uploadConversationAudio = async (file, unique_session_id) => {
     const audio_path = `${SESSION_CONVERSATION_DIR}/${fileName}`;
     return { audio_path };
 };
+*/
 
 const getTablesService = async () => {
     try {
@@ -167,13 +170,7 @@ const getTablesService = async () => {
     }
 };
 
-/**
- * POST /poc/session body: unique_session_id, waiter_id, table_id, transcriptions (JSON), audio_path, status ('stop' | 'end')
- * 1. Find or create session by unique_session_id.
- * 2. If status 'end': update existing conversation for this session to status 'end' and transcriptions; or create one.
- * 3. If status 'stop': create new conversation row (or upsert) with status 'stop'.
- * Note: conversations.unique_session_id is unique, so one conversation row per session for now; we update it on 'end'.
- */
+
 const createSessionService = async (body) => {
     const { unique_session_id, waiter_id, table_id, transcriptions, audio_path, status } = body;
     if (!unique_session_id || !waiter_id || !table_id || status === undefined) {
@@ -202,7 +199,7 @@ const createSessionService = async (body) => {
         status: status === 'end' ? 'end' : 'stop',
         transcriptions: transcriptionsForDb,
     };
-    let conversation = await ConversationModel.query().findOne({ unique_session_id });
+    // let conversation = await ConversationModel.query().findOne({ unique_session_id });
     // if (conversation) {
     //     await ConversationModel.query().findById(conversation.id).patch({
     //         status: conversationPayload.status,

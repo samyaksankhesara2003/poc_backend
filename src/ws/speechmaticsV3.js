@@ -50,7 +50,7 @@ wss.on("connection", (clientWs, req) => {
   let priming = true;
   const smWs = createSpeechmaticsSocketModify(clientWs);
   const liveBuffer = [];
-
+  
   smWs.once("open", () => {
     if (clientWs.readyState === clientWs.OPEN) {
       clientWs.send(JSON.stringify({ message: "PrimingStarted" }));
