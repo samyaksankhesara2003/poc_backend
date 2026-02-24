@@ -3,7 +3,7 @@ export default {
     connection: {
         host: 'localhost',
         user: 'root',
-        password: 'root1234',
+        password: 'Techuz@123',
         database: 'poc_db'
     },
     migrations: {

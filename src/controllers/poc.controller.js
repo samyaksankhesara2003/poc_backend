@@ -70,10 +70,36 @@ const createSessionController = async (req, res) => {
     });
   }
 };
+const saveAnalysisController = async (req, res) => {
+  try {
+    const data = await pocService.saveAnalysisService(req.body);
+    res.status(200).json(data);
+  } catch (error) {
+    console.error('saveAnalysisController error:', error);
+    res.status(500).json({ error: error.message || 'Internal Server Error' });
+  }
+};
+
+const getAnalysisController = async (req, res) => {
+  try {
+    const { unique_session_id } = req.params;
+    if (!unique_session_id) {
+      return res.status(400).json({ error: 'unique_session_id is required' });
+    }
+    const data = await pocService.getAnalysisService(unique_session_id);
+    res.status(200).json(data);
+  } catch (error) {
+    console.error('getAnalysisController error:', error);
+    res.status(500).json({ error: error.message || 'Internal Server Error' });
+  }
+};
+
 export const pocController = {
   loginController,
   uploadController,
   uploadConversationController,
   getTablesController,
   createSessionController,
+  saveAnalysisController,
+  getAnalysisController,
 };

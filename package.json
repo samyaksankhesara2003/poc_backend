@@ -4,7 +4,8 @@
   "main": "app.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node tests/test-runner.js",
+    "test:real-api": "node tests/test-runner.js --use-real-api",
     "dev": "nodemon src/server2.js",
     "migrate:make": "knex --knexfile src/config/knex.js migrate:make",
     "migrate:latest": "knex --knexfile src/config/knex.js migrate:latest",

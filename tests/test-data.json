@@ -1,0 +1,371 @@
+{
+  "tone_test_cases": [
+    {
+      "id": "tone-001",
+      "speaker": "CUSTOMER",
+      "text": "Hello, I am Vitor. Please recognize my voice for better diarization.",
+      "acoustic_metrics": {
+        "stress_level": 0.25,
+        "confidence_level": 0.75,
+        "energy_db": -45.0,
+        "speech_rate": 130
+      },
+      "expected_tone": "neutral_casual",
+      "description": "Waiter greeting - should be neutral/casual, not polite complaint"
+    },
+    {
+      "id": "tone-002",
+      "speaker": "CUSTOMER",
+      "text": "I hate to say this, but this is not great.",
+      "acoustic_metrics": {
+        "stress_level": 0.65,
+        "confidence_level": 0.45,
+        "energy_db": -42.0,
+        "speech_rate": 145
+      },
+      "expected_tone": "polite_complaint",
+      "description": "Polite complaint - customer expressing dissatisfaction politely"
+    },
+    {
+      "id": "tone-003",
+      "speaker": "CUSTOMER",
+      "text": "This is not what I ordered!",
+      "acoustic_metrics": {
+        "stress_level": 0.80,
+        "confidence_level": 0.35,
+        "energy_db": -38.0,
+        "speech_rate": 160
+      },
+      "expected_tone": "frustration_complaint",
+      "description": "Frustrated complaint - clear frustration and annoyance"
+    },
+    {
+      "id": "tone-004",
+      "speaker": "CUSTOMER",
+      "text": "This is absolutely unacceptable! I want to speak to your manager NOW!",
+      "acoustic_metrics": {
+        "stress_level": 0.95,
+        "confidence_level": 0.20,
+        "energy_db": -32.0,
+        "speech_rate": 180
+      },
+      "expected_tone": "strong_anger",
+      "description": "Strong anger - very upset, aggressive tone"
+    },
+    {
+      "id": "tone-005",
+      "speaker": "CUSTOMER",
+      "text": "Wow, this is amazing! I love it!",
+      "acoustic_metrics": {
+        "stress_level": 0.30,
+        "confidence_level": 0.85,
+        "energy_db": -40.0,
+        "speech_rate": 140
+      },
+      "expected_tone": "upsell_opportunity",
+      "description": "Upsell opportunity - excited, delighted customer"
+    },
+    {
+      "id": "tone-006",
+      "speaker": "CUSTOMER",
+      "text": "Hi there! How are you today?",
+      "acoustic_metrics": {
+        "stress_level": 0.20,
+        "confidence_level": 0.70,
+        "energy_db": -46.0,
+        "speech_rate": 125
+      },
+      "expected_tone": "positive_friendly",
+      "description": "Positive friendly - warm greeting"
+    },
+    {
+      "id": "tone-007",
+      "speaker": "CUSTOMER",
+      "text": "Um, I'm not sure... maybe?",
+      "acoustic_metrics": {
+        "stress_level": 0.40,
+        "confidence_level": 0.30,
+        "energy_db": -50.0,
+        "speech_rate": 110
+      },
+      "expected_tone": "confused_unsure",
+      "description": "Confused/unsure - hesitant, uncertain"
+    },
+    {
+      "id": "tone-008",
+      "speaker": "CUSTOMER",
+      "text": "Yeah, whatever. I guess it's okay.",
+      "acoustic_metrics": {
+        "stress_level": 0.25,
+        "confidence_level": 0.25,
+        "energy_db": -55.0,
+        "speech_rate": 95
+      },
+      "expected_tone": "bored_disengaged",
+      "description": "Bored/disengaged - low energy, uninterested"
+    },
+    {
+      "id": "tone-009",
+      "speaker": "CUSTOMER",
+      "text": "Excuse me, but the soup is a bit cold.",
+      "acoustic_metrics": {
+        "stress_level": 0.55,
+        "confidence_level": 0.50,
+        "energy_db": -44.0,
+        "speech_rate": 135
+      },
+      "expected_tone": "polite_complaint",
+      "description": "Polite complaint - raising issue politely"
+    },
+    {
+      "id": "tone-010",
+      "speaker": "CUSTOMER",
+      "text": "Haha, that's funny! You guys are great!",
+      "acoustic_metrics": {
+        "stress_level": 0.25,
+        "confidence_level": 0.80,
+        "energy_db": -41.0,
+        "speech_rate": 150
+      },
+      "expected_tone": "light_humor",
+      "description": "Light humor - joking, playful"
+    },
+    {
+      "id": "tone-011",
+      "speaker": "CUSTOMER",
+      "text": "The service was okay, nothing special.",
+      "acoustic_metrics": {
+        "stress_level": 0.35,
+        "confidence_level": 0.40,
+        "energy_db": -48.0,
+        "speech_rate": 120
+      },
+      "expected_tone": "mild_dissatisfaction",
+      "description": "Mild dissatisfaction - slight unhappiness but controlled"
+    },
+    {
+      "id": "tone-012",
+      "speaker": "WAITER",
+      "text": "Good evening! Welcome to our restaurant. How can I help you today?",
+      "acoustic_metrics": {
+        "stress_level": 0.20,
+        "confidence_level": 0.80,
+        "energy_db": -43.0,
+        "speech_rate": 130
+      },
+      "expected_tone": "positive_friendly",
+      "description": "Waiter greeting - should be positive/friendly"
+    },
+    {
+      "id": "tone-013",
+      "speaker": "WAITER",
+      "text": "I'm so sorry about that. Let me fix it right away.",
+      "acoustic_metrics": {
+        "stress_level": 0.45,
+        "confidence_level": 0.70,
+        "energy_db": -42.0,
+        "speech_rate": 140
+      },
+      "expected_tone": "neutral_casual",
+      "description": "Waiter apology - professional, neutral tone"
+    },
+    {
+      "id": "tone-014",
+      "speaker": "CUSTOMER",
+      "text": "I'm not really sure what I want. Can you recommend something?",
+      "acoustic_metrics": {
+        "stress_level": 0.35,
+        "confidence_level": 0.40,
+        "energy_db": -47.0,
+        "speech_rate": 125
+      },
+      "expected_tone": "confused_unsure",
+      "description": "Customer asking for recommendation - unsure"
+    },
+    {
+      "id": "tone-015",
+      "speaker": "CUSTOMER",
+      "text": "This is absolutely delicious! Best meal I've had in months!",
+      "acoustic_metrics": {
+        "stress_level": 0.25,
+        "confidence_level": 0.90,
+        "energy_db": -38.0,
+        "speech_rate": 155
+      },
+      "expected_tone": "upsell_opportunity",
+      "description": "Highly satisfied customer - perfect upsell moment"
+    }
+  ],
+  "content_test_cases": [
+    {
+      "id": "content-001",
+      "segments": [
+        {
+          "role": "WAITER",
+          "text": "Good evening! Welcome to our restaurant."
+        },
+        {
+          "role": "CUSTOMER",
+          "text": "Hello, I'd like to order the pasta."
+        }
+      ],
+      "expected": {
+        "topics": ["ordering", "greeting"],
+        "intent": {
+          "primary": "ordering",
+          "confidence": 0.9
+        },
+        "sentiment": {
+          "overall": "neutral",
+          "score": 0.1
+        },
+        "key_phrases": ["order the pasta", "welcome"],
+        "toxicity": {
+          "detected": false,
+          "level": "none"
+        },
+        "risk_signals": {
+          "detected": false,
+          "signals": []
+        }
+      },
+      "description": "Simple ordering conversation"
+    },
+    {
+      "id": "content-002",
+      "segments": [
+        {
+          "role": "CUSTOMER",
+          "text": "Excuse me, but this soup is cold. Can you please heat it up?"
+        },
+        {
+          "role": "WAITER",
+          "text": "I'm so sorry about that. I'll bring you a hot one right away."
+        }
+      ],
+      "expected": {
+        "topics": ["complaint", "service issue"],
+        "intent": {
+          "primary": "complaining",
+          "confidence": 0.85
+        },
+        "sentiment": {
+          "overall": "negative",
+          "score": -0.4
+        },
+        "key_phrases": ["soup is cold", "heat it up"],
+        "toxicity": {
+          "detected": false,
+          "level": "none"
+        },
+        "risk_signals": {
+          "detected": true,
+          "signals": ["customer dissatisfaction"]
+        }
+      },
+      "description": "Polite complaint about food temperature"
+    },
+    {
+      "id": "content-003",
+      "segments": [
+        {
+          "role": "CUSTOMER",
+          "text": "This is not what I ordered! I asked for chicken, not beef!"
+        },
+        {
+          "role": "WAITER",
+          "text": "I apologize for the mistake. Let me get that corrected immediately."
+        }
+      ],
+      "expected": {
+        "topics": ["order error", "complaint"],
+        "intent": {
+          "primary": "complaining",
+          "confidence": 0.95
+        },
+        "sentiment": {
+          "overall": "negative",
+          "score": -0.7
+        },
+        "key_phrases": ["not what I ordered", "chicken not beef"],
+        "toxicity": {
+          "detected": false,
+          "level": "none"
+        },
+        "risk_signals": {
+          "detected": true,
+          "signals": ["order error", "customer dissatisfaction"]
+        }
+      },
+      "description": "Order error complaint"
+    },
+    {
+      "id": "content-004",
+      "segments": [
+        {
+          "role": "CUSTOMER",
+          "text": "Wow, this is absolutely amazing! The best meal I've ever had!"
+        },
+        {
+          "role": "WAITER",
+          "text": "Thank you so much! I'm glad you enjoyed it."
+        }
+      ],
+      "expected": {
+        "topics": ["appreciation", "satisfaction"],
+        "intent": {
+          "primary": "thanking",
+          "confidence": 0.9
+        },
+        "sentiment": {
+          "overall": "positive",
+          "score": 0.9
+        },
+        "key_phrases": ["absolutely amazing", "best meal"],
+        "toxicity": {
+          "detected": false,
+          "level": "none"
+        },
+        "risk_signals": {
+          "detected": false,
+          "signals": []
+        }
+      },
+      "description": "Highly satisfied customer"
+    },
+    {
+      "id": "content-005",
+      "segments": [
+        {
+          "role": "CUSTOMER",
+          "text": "What do you recommend? I'm not sure what to order."
+        },
+        {
+          "role": "WAITER",
+          "text": "I'd recommend our chef's special pasta. It's very popular."
+        }
+      ],
+      "expected": {
+        "topics": ["recommendation", "ordering"],
+        "intent": {
+          "primary": "asking",
+          "confidence": 0.85
+        },
+        "sentiment": {
+          "overall": "neutral",
+          "score": 0.0
+        },
+        "key_phrases": ["what do you recommend", "chef's special pasta"],
+        "toxicity": {
+          "detected": false,
+          "level": "none"
+        },
+        "risk_signals": {
+          "detected": false,
+          "signals": []
+        }
+      },
+      "description": "Customer asking for recommendation"
+    }
+  ]
+}

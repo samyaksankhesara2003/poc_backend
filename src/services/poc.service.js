@@ -11,6 +11,7 @@ import { Pinecone } from "@pinecone-database/pinecone";
 import Table from "../models/Table.js";
 import SessionModel from "../models/Session.js";
 import ConversationModel from "../models/Conversation.js";
+import AudioAnalysis from "../models/AudioAnalysis.js";
 const pc = new Pinecone({
     apiKey: process.env.PINECONE_API_KEY,
 });
@@ -158,10 +159,113 @@ const createSessionService = async (body) => {
 
     return { message: 'Session saved', session_id: session.id, status };
 };
+
+/**
+ * POST /poc/save-analysis
+ * body: { unique_session_id, tone_snapshots, content_analysis }
+ * Aggregates tone snapshots and persists both tone + content analysis.
+ */
+const saveAnalysisService = async (body) => {
+    const { unique_session_id, tone_snapshots, content_analysis } = body;
+    if (!unique_session_id) {
+        throw new Error('unique_session_id is required');
+    }
+
+    const session = await SessionModel.query().findOne({ unique_session_id });
+    if (!session) {
+        throw new Error('Session not found for this unique_session_id');
+    }
+
+    const snaps = Array.isArray(tone_snapshots) ? tone_snapshots : [];
+    const validSnaps = snaps.filter(
+        (s) => s?.tone_analysis && s.tone_analysis.voice_quality !== 'silence'
+    );
+
+    let dominant_emotion = 'neutral';
+    let avg_stress = 0, avg_confidence = 0, avg_energy = 0;
+    let avg_rate = 0, avg_pitch = 0, avg_pv = 0;
+    let sentiment_audio = 'neutral';
+
+    if (validSnaps.length > 0) {
+        const emotionCounts = {};
+        let sentSum = 0;
+
+        for (const s of validSnaps) {
+            const t = s.tone_analysis;
+            emotionCounts[t.emotion] = (emotionCounts[t.emotion] || 0) + 1;
+            avg_stress += t.stress_level || 0;
+            avg_confidence += t.confidence_level || 0;
+            avg_energy += t.energy || 0;
+            avg_rate += t.speech_rate || 0;
+            avg_pitch += t.pitch_mean_hz || 0;
+            avg_pv += t.pitch_variation || 0;
+            sentSum += t.sentiment_polarity || 0;
+        }
+
+        const n = validSnaps.length;
+        avg_stress /= n;
+        avg_confidence /= n;
+        avg_energy /= n;
+        avg_rate /= n;
+        avg_pitch /= n;
+        avg_pv /= n;
+        const avgSent = sentSum / n;
+
+        dominant_emotion = Object.entries(emotionCounts).sort((a, b) => b[1] - a[1])[0][0];
+        sentiment_audio = avgSent > 0.15 ? 'positive' : avgSent < -0.15 ? 'negative' : 'neutral';
+    }
+
+    const ca = content_analysis?.content_analysis || content_analysis || null;
+
+    const payload = {
+        session_id: session.id,
+        unique_session_id,
+        tone_snapshots: JSON.stringify(snaps),
+        dominant_emotion,
+        avg_stress_level: Math.round(avg_stress * 1000) / 1000,
+        avg_confidence_level: Math.round(avg_confidence * 1000) / 1000,
+        avg_energy: Math.round(avg_energy * 10000) / 10000,
+        avg_speech_rate: Math.round(avg_rate * 10) / 10,
+        avg_pitch_hz: Math.round(avg_pitch * 10) / 10,
+        avg_pitch_variation: Math.round(avg_pv * 1000) / 1000,
+        overall_sentiment_audio: sentiment_audio,
+        content_analysis: ca ? JSON.stringify(ca) : null,
+        topics: ca?.topics ? JSON.stringify(ca.topics) : null,
+        key_phrases: ca?.key_phrases ? JSON.stringify(ca.key_phrases) : null,
+        primary_intent: ca?.intent?.primary || null,
+        overall_sentiment_text: ca?.sentiment?.overall || null,
+        toxicity: ca?.toxicity ? JSON.stringify(ca.toxicity) : null,
+        risk_signals: ca?.risk_signals ? JSON.stringify(ca.risk_signals) : null,
+        summary: ca?.summary || null,
+    };
+
+    const existing = await AudioAnalysis.query().findOne({ unique_session_id });
+    if (existing) {
+        await AudioAnalysis.query().findById(existing.id).patch(payload);
+    } else {
+        await AudioAnalysis.query().insert(payload);
+    }
+
+    return { message: 'Analysis saved', session_id: session.id };
+};
+
+/**
+ * GET /poc/analysis/:unique_session_id
+ */
+const getAnalysisService = async (unique_session_id) => {
+    const analysis = await AudioAnalysis.query().findOne({ unique_session_id });
+    if (!analysis) {
+        return { message: 'No analysis found', data: null };
+    }
+    return { message: 'Analysis found', data: analysis };
+};
+
 export const pocService = {
     loginService,
     uploadWaiterAudio,
     uploadConversationAudio,
     getTablesService,
     createSessionService,
+    saveAnalysisService,
+    getAnalysisService,
 };

@@ -1,5 +1,8 @@
 import { WebSocketServer } from "ws";
 import { createSpeechmaticsSocketModify } from "../services/modifyspeechmatricsV2.service.js";
+import { AudioAnalysisBridge } from "../services/audioAnalysis.service.js";
+import { ContentAnalyzer } from "../services/contentAnalysis.service.js";
+import { ToneClassifier } from "../services/toneClassification.service.js";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -13,7 +16,6 @@ const LEGACY_WAITER_PCM_PATH = path.resolve(
 );
 const WAV_HEADER_BYTES = 44;
 
-// 20ms chunks at 16kHz 16-bit mono (640 bytes = 20ms)
 const PRIME_CHUNK_BYTES = 640;
 const PRIME_CHUNK_INTERVAL_MS = 20;
 const SILENCE_MS = 1000;
@@ -32,6 +34,17 @@ function getWaiterEmailFromRequest(req) {
   }
 }
 
+function getLanguageFromRequest(req) {
+  if (!req?.url) return null;
+  try {
+    const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
+    const lang = url.searchParams.get("lang") || url.searchParams.get("language");
+    return lang && ["en", "es"].includes(lang.toLowerCase()) ? lang.toLowerCase() : null;
+  } catch {
+    return null;
+  }
+}
+
 function resolveWaiterAudioPath(audioPath) {
   if (!audioPath || typeof audioPath !== "string") return null;
   const absolute = path.isAbsolute(audioPath)
@@ -40,13 +53,90 @@ function resolveWaiterAudioPath(audioPath) {
   return fs.existsSync(absolute) ? absolute : null;
 }
 
+function safeSend(ws, data) {
+  if (ws.readyState === ws.OPEN) {
+    ws.send(typeof data === "string" ? data : JSON.stringify(data));
+  }
+}
+
 wss.on("connection", (clientWs, req) => {
   console.log("🌐 Browser connected");
   const waiterEmail = getWaiterEmailFromRequest(req);
+  
+  // Extract language from query params (default: "en")
+  const language = getLanguageFromRequest(req) || "en";
 
   let priming = true;
-  const smWs = createSpeechmaticsSocketModify(clientWs);
+  const smWs = createSpeechmaticsSocketModify(clientWs, language);
   const liveBuffer = [];
+
+  // ── LLM tone classifier (transcript + acoustic metrics → GPT-4o-mini) ──
+  const toneClassifier = new ToneClassifier((result) => {
+    safeSend(clientWs, { message: "ToneClassification", ...result });
+  });
+
+  // ── Acoustic metrics bridge (audio → Python analyzer) ──
+  const analysisBridge = new AudioAnalysisBridge((result) => {
+    safeSend(clientWs, { message: "AudioMetrics", ...result });
+    if (result.audio_metrics) {
+      toneClassifier.setAcousticMetrics(result.audio_metrics);
+    }
+  });
+  analysisBridge.connect();
+
+  // ── Content analysis (transcript → OpenAI) ──
+  const contentAnalyzer = new ContentAnalyzer((result) => {
+    safeSend(clientWs, { message: "ContentAnalysis", ...result });
+  });
+
+  // Intercept Speechmatics transcripts to feed content analyzer
+  const originalOnMessage = smWs.listeners("message");
+  smWs.removeAllListeners("message");
+
+  smWs.on("message", (data) => {
+    try {
+      const message = JSON.parse(data.toString());
+
+      if (message.message === "AddTranscript") {
+        clientWs.send(JSON.stringify(message));
+
+        const results = message.results;
+        if (results?.length) {
+          const segments = [];
+          for (const r of results) {
+            const content = r.alternatives?.[0]?.content;
+            const speaker = r.alternatives?.[0]?.speaker || "S1";
+            if (content == null) continue;
+            const isPunc = /^[.,!?;:'"\s]+$/.test((content || "").trim());
+
+            // Feed non-punctuation words to the LLM tone classifier
+            if (!isPunc) {
+              toneClassifier.addText(speaker, content);
+            }
+
+            const role = speaker === "S1" ? "WAITER" : "CUSTOMER";
+            if (segments.length > 0 && segments[segments.length - 1].role === role) {
+              const last = segments[segments.length - 1];
+              last.text += isPunc ? content : (last.text ? " " : "") + content;
+            } else {
+              segments.push({ role, text: content });
+            }
+          }
+          if (segments.length > 0) {
+            contentAnalyzer.addSegments(segments);
+          }
+        }
+      }
+
+      if (message.message === "EndOfTranscript") {
+        console.log("🛑 Transcription finished");
+        toneClassifier.flush();
+        contentAnalyzer.forceAnalyze();
+      }
+    } catch (err) {
+      console.error("Speechmatics parse error:", err);
+    }
+  });
 
   smWs.once("open", () => {
     if (clientWs.readyState === clientWs.OPEN) {
@@ -68,6 +158,9 @@ wss.on("connection", (clientWs, req) => {
   });
 
   clientWs.on("message", (audioChunk) => {
+    // Fork audio: send to Speechmatics AND the tone analyzer
+    analysisBridge.sendAudio(audioChunk);
+
     if (priming) {
       liveBuffer.push(audioChunk);
     } else if (smWs.readyState === smWs.OPEN) {
@@ -81,6 +174,9 @@ wss.on("connection", (clientWs, req) => {
       smWs.send(JSON.stringify({ message: "EndOfStream" }));
     }
     smWs.close();
+    analysisBridge.close();
+    toneClassifier.flush().then(() => toneClassifier.close());
+    contentAnalyzer.forceAnalyze().then(() => contentAnalyzer.close());
   });
 
   clientWs.on("error", (err) => console.error("Client error:", err));

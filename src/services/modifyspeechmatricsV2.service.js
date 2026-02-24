@@ -2,7 +2,16 @@ import WebSocket from "ws";
 import dotenv from "dotenv";
 dotenv.config();
 
-export function createSpeechmaticsSocketModify(clientWs) {
+/**
+ * Create Speechmatics WebSocket connection with language support
+ * @param {WebSocket} clientWs - Client WebSocket connection
+ * @param {string} language - Language code: "en" (English) or "es" (Spanish), defaults to "en"
+ */
+export function createSpeechmaticsSocketModify(clientWs, language = "en") {
+    // Validate language
+    const validLanguages = ["en", "es"];
+    const lang = validLanguages.includes(language) ? language : "en";
+    
     const smWs = new WebSocket("wss://eu2.rt.speechmatics.com/v2", {
         headers: {
             Authorization: `Bearer ${process.env.SPEECHMATICS_API_KEY}`,
@@ -10,7 +19,7 @@ export function createSpeechmaticsSocketModify(clientWs) {
     });
 
     smWs.on("open", () => {
-        console.log("✅ Connected to Speechmatics");
+        console.log(`✅ Connected to Speechmatics (language: ${lang})`);
 
         smWs.send(
             JSON.stringify({
@@ -21,7 +30,7 @@ export function createSpeechmaticsSocketModify(clientWs) {
                     sample_rate: 16000,
                 },
                 transcription_config: {
-                    language: "es",
+                    language: lang, // "en" for English, "es" for Spanish
                     diarization: "speaker",
                     operating_point: "enhanced",
                     max_delay_mode: "fixed",
