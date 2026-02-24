@@ -34,8 +34,8 @@ app.add_middleware(
 
 SAMPLE_RATE = 16000
 BYTES_PER_SAMPLE = 2
-WINDOW_SECONDS = 3.0
-HOP_SECONDS = 2.0
+WINDOW_SECONDS = 2.0  # Reduced from 3.0s for faster updates
+HOP_SECONDS = 1.0     # Reduced from 2.0s for lower latency (analyze every 1s)
 WINDOW_BYTES = int(SAMPLE_RATE * WINDOW_SECONDS * BYTES_PER_SAMPLE)
 HOP_BYTES = int(SAMPLE_RATE * HOP_SECONDS * BYTES_PER_SAMPLE)
 

@@ -18,8 +18,8 @@ dotenv.config();
 
 const openai = new OpenAI({ 
   apiKey: process.env.OPENAI_API_KEY,
-  timeout: 10000, // 10 second timeout
-  maxRetries: 3,
+  timeout: 8000,  // 8 second timeout (reduced from 10s for faster response)
+  maxRetries: 2,  // Reduced from 3 - faster failure recovery
 });
 
 const ANALYSIS_PROMPT = `You are a real-time conversation analyst for a restaurant/hospitality environment.
@@ -134,7 +134,7 @@ export class ContentAnalyzer {
     this._requestQueue = [];
     this._queueProcessing = false;
 
-    this.BATCH_INTERVAL_MS = 8000;
+    this.BATCH_INTERVAL_MS = 6000;  // Reduced from 8000ms for faster content analysis
     this.MIN_NEW_SEGMENTS = 2;
 
     // Circuit breaker state
@@ -294,11 +294,13 @@ export class ContentAnalyzer {
       const response = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         temperature: 0.1,
-        max_tokens: 800,
+        max_tokens: 600,  // Reduced from 800 - sufficient for structured JSON response
         messages: [
           { role: "system", content: ANALYSIS_PROMPT },
           { role: "user", content: conversationText },
         ],
+      }, {
+        timeout: 8000,  // Explicit timeout (reduced from default 10s)
       });
 
       const raw = response.choices[0]?.message?.content?.trim();

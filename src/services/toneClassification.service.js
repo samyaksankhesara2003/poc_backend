@@ -28,8 +28,8 @@ dotenv.config();
 
 const openai = new OpenAI({ 
   apiKey: process.env.OPENAI_API_KEY,
-  timeout: 5000, // 5 second timeout
-  maxRetries: 3,
+  timeout: 4000, // 4 second timeout (reduced from 5s for faster response)
+  maxRetries: 2, // Reduced from 3 - faster failure recovery
 });
 
 /**
@@ -438,8 +438,8 @@ Respond with ONLY a raw JSON object:
 
 No markdown, no explanation, no code fences.`;
 
-const MIN_WORDS = 3;
-const DEBOUNCE_MS = 1500;
+const MIN_WORDS = 2;        // Reduced from 3 for faster initial classification
+const DEBOUNCE_MS = 800;    // Reduced from 1500ms for faster tone classification (800ms = ~40% faster)
 const MAX_RETRIES = 3;
 const INITIAL_RETRY_DELAY_MS = 500;
 const CIRCUIT_BREAKER_THRESHOLD = 5;
@@ -726,11 +726,13 @@ export class ToneClassifier {
       const response = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         temperature: 0,
-        max_tokens: 60,
+        max_tokens: 50,  // Reduced from 60 - response is small JSON
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: userMsg },
         ],
+      }, {
+        timeout: 4000,  // Explicit timeout (slightly faster than default 5s)
       });
 
       const raw = response.choices[0]?.message?.content?.trim();

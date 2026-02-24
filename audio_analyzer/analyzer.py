@@ -14,7 +14,7 @@ import librosa
 
 
 class AudioAnalyzer:
-    def __init__(self, sample_rate: int = 16000, window_seconds: float = 3.0):
+    def __init__(self, sample_rate: int = 16000, window_seconds: float = 2.0):
         self.sr = sample_rate
         self.window_samples = int(sample_rate * window_seconds)
 
@@ -50,15 +50,19 @@ class AudioAnalyzer:
         return lfilter([1, -coeff], 1, audio).astype(np.float32)
 
     def _extract_features(self, audio):
-        rms = librosa.feature.rms(y=audio, frame_length=512, hop_length=256)[0]
+        # Optimized: Use larger hop_length for faster processing (512 instead of 256)
+        # Still accurate enough for 2-second windows
+        hop = 512
+        rms = librosa.feature.rms(y=audio, frame_length=512, hop_length=hop)[0]
         energy_mean = float(np.mean(rms))
         energy_std = float(np.std(rms))
         energy_db = float(20 * np.log10(max(energy_mean, 1e-10)))
         energy_dynamics = energy_std / max(energy_mean, 1e-6)
 
+        # Optimized: Smaller frame_length for faster pitch detection (1024 instead of 2048)
         f0, _, _ = librosa.pyin(
             audio, fmin=65, fmax=330, sr=self.sr,
-            frame_length=2048, hop_length=256
+            frame_length=1024, hop_length=hop
         )
         voiced_f0 = f0[~np.isnan(f0)] if f0 is not None else np.array([])
         if len(voiced_f0) > 0:
@@ -73,13 +77,15 @@ class AudioAnalyzer:
             pitch_mean = pitch_std = pitch_variation = 0.0
             voiced_ratio = 0.0
 
+        # Optimized: Larger hop_length for faster onset detection
         onset_frames = librosa.onset.onset_detect(
-            y=audio, sr=self.sr, hop_length=256, backtrack=False
+            y=audio, sr=self.sr, hop_length=hop, backtrack=False
         )
         duration = len(audio) / self.sr
         speech_rate = len(onset_frames) / max(duration, 0.1) * 60
 
-        centroid = librosa.feature.spectral_centroid(y=audio, sr=self.sr, hop_length=256)[0]
+        # Optimized: Larger hop_length for faster spectral analysis
+        centroid = librosa.feature.spectral_centroid(y=audio, sr=self.sr, hop_length=hop)[0]
         spectral_centroid = float(np.mean(centroid))
 
         if pitch_variation < 0.05 and energy_mean < 0.005:
