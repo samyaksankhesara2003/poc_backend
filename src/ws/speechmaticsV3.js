@@ -120,9 +120,7 @@ async function primeWaiterVoice(smWs, waiterEmail) {
   if (waiterEmail) {
     const waiter = await Waiter.query().select("audio_path").findOne({ email: waiterEmail });
     if (waiter?.audio_path) {
-      const result = await loadWaiterAudioFromMinio(waiter.audio_path);
-      console.log(result.pcmBuffer,"result>>>>>>>>>>>>>>");
-      
+      const result = await loadWaiterAudioFromMinio(waiter.audio_path);      
       if (result.pcmBuffer) {
         pcmBuffer = result.pcmBuffer;
         sourceLabel = result.sourceLabel;
