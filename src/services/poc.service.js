@@ -7,7 +7,7 @@ import OpenAI from "openai";
 import Waiter from "../models/Waiter.js";
 dotenv.config();
 import storageService from "./minio.service.js";
-
+import awsService from "./aws.service.js";
 import { Pinecone } from "@pinecone-database/pinecone";
 import Table from "../models/Table.js";
 import SessionModel from "../models/Session.js";
@@ -61,7 +61,11 @@ const uploadWaiterAudio = async (file, body) => {
 
     if (waiter.audio_path) {
         try {
-            await storageService.deleteObject(waiter.audio_path);
+            //minio service
+            // await storageService.deleteObject(waiter.audio_path);
+
+            //aws service
+            await awsService.deleteObject(waiter.audio_path);
         } catch (err) {
             console.warn(
                 '[uploadWaiterAudio] Failed to delete old MinIO object:',
@@ -75,7 +79,11 @@ const uploadWaiterAudio = async (file, body) => {
 
     const objectKey = `waiteraudio/${safeName}${ext}`;
 
-    await storageService.uploadBuffer(objectKey, file.buffer);
+    //minio service
+    // await storageService.uploadBuffer(objectKey, file.buffer);
+
+    //aws service
+    await awsService.uploadBuffer(objectKey, file.buffer);
 
     await Waiter.query()
         .findOne({ email })
@@ -138,7 +146,12 @@ const uploadConversationAudio = async (file, unique_session_id) => {
     const timestamp = Date.now();
     const fileName = `${unique_session_id}_${timestamp}${ext}`;
     const objectKey = `${SESSION_CONVERSATION_DIR}/${fileName}`;
-    await storageService.uploadBuffer(objectKey, file.buffer);
+    //minio service
+    // await storageService.uploadBuffer(objectKey, file.buffer);
+
+    //aws service
+    await awsService.uploadBuffer(objectKey, file.buffer);
+
     return { audio_path: objectKey };
 };
 

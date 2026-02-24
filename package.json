@@ -16,6 +16,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.997.0",
     "@deepgram/sdk": "^4.11.3",
     "@pinecone-database/pinecone": "^7.0.0",
     "aws-sdk": "^2.1693.0",

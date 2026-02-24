@@ -5,6 +5,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import Waiter from "../models/Waiter.js";
 import storageService from "../services/minio.service.js";
+import awsService from "../services/aws.service.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -100,7 +101,12 @@ export function handleSpeechMatrixConnection() { }
  */
 async function loadWaiterAudioFromMinio(audioPath) {
   if (!audioPath || typeof audioPath !== "string") return { pcmBuffer: null };
-  const raw = await storageService.downloadAudioBuffer(audioPath);
+
+  //minio service
+  // const raw = await storageService.downloadAudioBuffer(audioPath);
+
+  //aws service 
+  const raw = await awsService.downloadAudioBuffer(audioPath);
   if (!raw || raw.length === 0) return { pcmBuffer: null };
   const ext = path.extname(audioPath).toLowerCase();
   const name = path.basename(audioPath);
