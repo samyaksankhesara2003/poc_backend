@@ -12,6 +12,13 @@ dist
 dist-ssr
 *.local
 venv/
+audio_analyzer/venv/
+**/venv/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.Python
 .env
 waiteraudio/
 sessionConservation/
