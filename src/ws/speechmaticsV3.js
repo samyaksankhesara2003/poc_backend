@@ -103,10 +103,11 @@ async function loadWaiterAudioFromMinio(audioPath) {
   if (!audioPath || typeof audioPath !== "string") return { pcmBuffer: null };
 
   //minio service
-  // const raw = await storageService.downloadAudioBuffer(audioPath);
+  const raw = await storageService.downloadAudioBuffer(audioPath);
 
   //aws service 
-  const raw = await awsService.downloadAudioBuffer(audioPath);
+  // const raw = await awsService.downloadAudioBuffer(audioPath);
+
   if (!raw || raw.length === 0) return { pcmBuffer: null };
   const ext = path.extname(audioPath).toLowerCase();
   const name = path.basename(audioPath);

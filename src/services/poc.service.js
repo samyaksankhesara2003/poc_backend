@@ -62,10 +62,10 @@ const uploadWaiterAudio = async (file, body) => {
     if (waiter.audio_path) {
         try {
             //minio service
-            // await storageService.deleteObject(waiter.audio_path);
+            await storageService.deleteObject(waiter.audio_path);
 
             //aws service
-            await awsService.deleteObject(waiter.audio_path);
+            // await awsService.deleteObject(waiter.audio_path);
         } catch (err) {
             console.warn(
                 '[uploadWaiterAudio] Failed to delete old MinIO object:',
@@ -80,10 +80,10 @@ const uploadWaiterAudio = async (file, body) => {
     const objectKey = `waiteraudio/${safeName}${ext}`;
 
     //minio service
-    // await storageService.uploadBuffer(objectKey, file.buffer);
+    await storageService.uploadBuffer(objectKey, file.buffer);
 
     //aws service
-    await awsService.uploadBuffer(objectKey, file.buffer);
+    // await awsService.uploadBuffer(objectKey, file.buffer);
 
     await Waiter.query()
         .findOne({ email })
@@ -147,10 +147,10 @@ const uploadConversationAudio = async (file, unique_session_id) => {
     const fileName = `${unique_session_id}_${timestamp}${ext}`;
     const objectKey = `${SESSION_CONVERSATION_DIR}/${fileName}`;
     //minio service
-    // await storageService.uploadBuffer(objectKey, file.buffer);
+    await storageService.uploadBuffer(objectKey, file.buffer);
 
     //aws service
-    await awsService.uploadBuffer(objectKey, file.buffer);
+    // await awsService.uploadBuffer(objectKey, file.buffer);
 
     return { audio_path: objectKey };
 };
