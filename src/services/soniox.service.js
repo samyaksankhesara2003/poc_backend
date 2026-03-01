@@ -68,7 +68,6 @@ function sendTokenMessages(clientWs, tokens) {
   if (!tokens || tokens.length === 0 || clientWs.readyState !== clientWs.OPEN) return;
   const partialTokens = tokens.filter((t) => t.is_final === false);
   const finalTokens = tokens.filter((t) => t.is_final === true);
-  console.log(finalTokens, "is_final");
 
   if (partialTokens.length > 0) {
     clientWs.send(

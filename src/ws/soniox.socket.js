@@ -142,4 +142,4 @@ wss.on("connection", (clientWs, req) => {
 });
 
 export { wss as sonioxWss };
-export function handleSonioxConnection() {}
+export function handleSonioxConnection() { }

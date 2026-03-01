@@ -50,7 +50,7 @@ wss.on("connection", (clientWs, req) => {
   let priming = true;
   const smWs = createSpeechmaticsSocketModify(clientWs);
   const liveBuffer = [];
-  
+
   smWs.once("open", () => {
     if (clientWs.readyState === clientWs.OPEN) {
       clientWs.send(JSON.stringify({ message: "PrimingStarted" }));
@@ -111,7 +111,7 @@ async function loadWaiterAudioFromMinio(audioPath) {
   if (ext === ".pcm") {
     return { pcmBuffer: raw, sourceLabel: `waiter PCM (${name})` };
   }
-  
+
   return { pcmBuffer: raw, sourceLabel: `waiter file (${name})` };
 }
 
@@ -139,7 +139,7 @@ async function primeWaiterVoice(smWs, waiterEmail) {
     `🎙 Priming with ${sourceLabel}: ${pcmBuffer.length} bytes (~${(pcmBuffer.length / 32000).toFixed(1)}s)`,
   );
   await streamPcmRealtime(smWs, Buffer.from(pcmBuffer));
-  // await sendSilence(smWs);
+  await sendSilence(smWs);
   console.log("🟢 Waiter PCM + silence sent — live stream taking over");
 }
 
