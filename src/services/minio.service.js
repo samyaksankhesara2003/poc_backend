@@ -50,7 +50,7 @@ class ObjectStorage {
      * @param {string} key - Object key (e.g. waiteraudio/samyak.wav)
      * @returns {Promise<Buffer|null>} File buffer or null on failure
      */
-    async downloadAudioBuffer(key) {
+     async downloadAudioBuffer(key) {
         if (!key || typeof key !== "string") return null;
         try {
             const buffer = await this.downloadBuffer(key);

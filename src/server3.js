@@ -3,25 +3,25 @@ dotenv.config();
 
 import http from "http";
 import app from "./app.js";
-import { speechMatrixWss } from "./ws/speechmaticsV3.js";
+import { sonioxWss } from "./ws/soniox.socket.js";
 
 const PORT = process.env.PORT || 3000;
 
 const server = http.createServer(app);
 
-const SPEECHMATICS_PATH = "/session-backend";
+const SONIOX_PATH = "/session-soniox";
 
 server.on("upgrade", (req, socket, head) => {
   const pathname = req.url?.split("?")[0] || "";
-  if (pathname !== SPEECHMATICS_PATH) {
+  if (pathname !== SONIOX_PATH) {
     socket.destroy();
     return;
   }
-  speechMatrixWss.handleUpgrade(req, socket, head, (ws) => {
-    speechMatrixWss.emit("connection", ws, req);
+  sonioxWss.handleUpgrade(req, socket, head, (ws) => {
+    sonioxWss.emit("connection", ws, req);
   });
 });
 
 server.listen(PORT, () => {
-    console.log(`🚀 Backend running on port ${PORT}`);
+  console.log(`🚀 Backend (Soniox) running on port ${PORT}`);
 });

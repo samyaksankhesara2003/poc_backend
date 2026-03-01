@@ -13,7 +13,6 @@ const LEGACY_WAITER_PCM_PATH = path.resolve(
   __dirname,
   "../../recordings/recording.pcm",
 );
-const WAV_HEADER_BYTES = 44;
 
 // 20ms chunks at 16kHz 16-bit mono (640 bytes = 20ms)
 const PRIME_CHUNK_BYTES = 640;
@@ -102,21 +101,17 @@ export function handleSpeechMatrixConnection() { }
 async function loadWaiterAudioFromMinio(audioPath) {
   if (!audioPath || typeof audioPath !== "string") return { pcmBuffer: null };
 
-  //minio service
   const raw = await storageService.downloadAudioBuffer(audioPath);
-
-  //aws service 
   // const raw = await awsService.downloadAudioBuffer(audioPath);
 
   if (!raw || raw.length === 0) return { pcmBuffer: null };
   const ext = path.extname(audioPath).toLowerCase();
   const name = path.basename(audioPath);
-  if (ext === ".wav" && raw.length > WAV_HEADER_BYTES) {
-    return {
-      pcmBuffer: raw.subarray(WAV_HEADER_BYTES),
-      sourceLabel: `waiter WAV (${name})`,
-    };
+
+  if (ext === ".pcm") {
+    return { pcmBuffer: raw, sourceLabel: `waiter PCM (${name})` };
   }
+  
   return { pcmBuffer: raw, sourceLabel: `waiter file (${name})` };
 }
 
@@ -127,7 +122,7 @@ async function primeWaiterVoice(smWs, waiterEmail) {
   if (waiterEmail) {
     const waiter = await Waiter.query().select("audio_path").findOne({ email: waiterEmail });
     if (waiter?.audio_path) {
-      const result = await loadWaiterAudioFromMinio(waiter.audio_path);      
+      const result = await loadWaiterAudioFromMinio(waiter.audio_path);
       if (result.pcmBuffer) {
         pcmBuffer = result.pcmBuffer;
         sourceLabel = result.sourceLabel;
@@ -144,7 +139,7 @@ async function primeWaiterVoice(smWs, waiterEmail) {
     `🎙 Priming with ${sourceLabel}: ${pcmBuffer.length} bytes (~${(pcmBuffer.length / 32000).toFixed(1)}s)`,
   );
   await streamPcmRealtime(smWs, Buffer.from(pcmBuffer));
-  await sendSilence(smWs);
+  // await sendSilence(smWs);
   console.log("🟢 Waiter PCM + silence sent — live stream taking over");
 }
 

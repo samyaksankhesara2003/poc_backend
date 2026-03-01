@@ -70,10 +70,40 @@ const createSessionController = async (req, res) => {
     });
   }
 };
+
+const getWaiterAudioController = async (req, res) => {
+  try {
+    const { audio_path } = req.query;
+    if (!audio_path) {
+      return res.status(400).json({ error: 'audio_path is required' });
+    }
+
+    const stream = await pocService.getWaiterAudioStream(audio_path);
+    const isPcm = audio_path.toLowerCase().endsWith('.pcm');
+
+    res.setHeader('Content-Type', isPcm ? 'application/octet-stream' : 'audio/wav');
+    res.setHeader('Cache-Control', 'no-store');
+
+    stream.on('error', (err) => {
+      console.error('getWaiterAudioController stream error:', err);
+      if (!res.headersSent) {
+        res.status(500).end('Error streaming audio');
+      }
+    });
+
+    stream.pipe(res);
+  } catch (error) {
+    console.error('getWaiterAudioController error:', error);
+    if (!res.headersSent) {
+      res.status(500).json({ error: error.message || 'Internal Server Error' });
+    }
+  }
+};
 export const pocController = {
   loginController,
   uploadController,
   uploadConversationController,
   getTablesController,
   createSessionController,
+  getWaiterAudioController
 };
