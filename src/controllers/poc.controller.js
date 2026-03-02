@@ -79,9 +79,9 @@ const getWaiterAudioController = async (req, res) => {
     }
 
     const stream = await pocService.getWaiterAudioStream(audio_path);
-    const isPcm = audio_path.toLowerCase().endsWith('.pcm');
-
-    res.setHeader('Content-Type', isPcm ? 'application/octet-stream' : 'audio/wav');
+    const ext = audio_path.toLowerCase().split('.').pop();
+    const mimeMap = { wav: 'audio/wav', webm: 'audio/webm', ogg: 'audio/ogg', mp4: 'audio/mp4' };
+    res.setHeader('Content-Type', mimeMap[ext] || 'application/octet-stream');
     res.setHeader('Cache-Control', 'no-store');
 
     stream.on('error', (err) => {

@@ -8,9 +8,8 @@ const SONIOX_WS_URL = "wss://stt-rt.soniox.com/transcribe-websocket";
 const DEFAULT_CONFIG = {
   api_key: process.env.SONIOX_API_KEY,
   model: "stt-rt-v4",
-  audio_format: "pcm_s16le",
-  sample_rate: 16000,
-  num_channels: 1,
+  audio_format: "auto",
+  num_channels: 2,
   language_hints: ["en"],
   language_hints_strict: true,
   enable_speaker_diarization: true,
@@ -87,7 +86,7 @@ function sendTokenMessages(clientWs, tokens) {
  *
  * @param {WebSocket} clientWs - Browser WebSocket
  * @param {object} [configOverrides] - Override default config (e.g. model, context)
- * @returns {WebSocket} The Soniox WebSocket (use to send PCM after config is sent)
+ * @returns {WebSocket} The Soniox WebSocket (use to send audio after config is sent)
  */
 export function createSonioxSocket(clientWs, configOverrides = {}) {
   const config = { ...DEFAULT_CONFIG, ...configOverrides };

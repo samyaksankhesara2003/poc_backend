@@ -76,11 +76,10 @@ const uploadWaiterAudio = async (file, body) => {
         }
     }
 
-    // Accept .pcm (raw 16-bit PCM) or .wav; default to .pcm for new recordings
-    const ext = path.extname(file.originalname)?.toLowerCase();
-    const safeExt = ext === '.wav' || ext === '.pcm' ? ext : '.pcm';
+    // Accept any audio container format (webm, wav, ogg, etc.)
+    const ext = path.extname(file.originalname)?.toLowerCase() || '.webm';
     const safeName = sanitizeUsername(username);
-    const objectKey = `waiteraudio/${safeName}${safeExt}`;
+    const objectKey = `waiteraudio/${safeName}${ext}`;
 
     //minio service
     await storageService.uploadBuffer(objectKey, file.buffer);
@@ -233,16 +232,6 @@ const createSessionService = async (body) => {
 const getWaiterAudioStream = async (audio_path) => {
     if (!audio_path) {
         throw new Error('audio_path is required');
-    }
-    const ext = path.extname(audio_path).toLowerCase();
-    if (ext === '.pcm') {
-        //-- minio service
-        const pcmBuffer = await storageService.downloadAudioBuffer(audio_path);
-
-        //-- aws service
-        // const pcmBuffer = await awsService.downloadAudioBuffer(audio_path);
-        if (!pcmBuffer || pcmBuffer.length === 0) throw new Error('Empty or missing PCM file');
-        return Readable.from(pcmBuffer);
     }
     return storageService.downloadStream(audio_path);
     // return awsService.downloadStream(audio_path);

@@ -7,7 +7,6 @@ import { createSonioxSocket } from "../services/soniox.service.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const WAV_HEADER_BYTES = 44;
 const PRIME_CHUNK_BYTES = 640;
 const PRIME_CHUNK_INTERVAL_MS = 20;
 
@@ -24,27 +23,24 @@ function getWaiterEmailFromRequest(req) {
   }
 }
 
+/**
+ * Download waiter audio from MinIO and return the raw buffer as-is.
+ * Soniox uses audio_format: "auto" so no header stripping or format conversion needed.
+ */
 async function loadWaiterAudioFromMinio(audioPath) {
-  if (!audioPath || typeof audioPath !== "string") return { pcmBuffer: null };
+  if (!audioPath || typeof audioPath !== "string") return { audioBuffer: null };
   try {
     const raw = await storageService.downloadAudioBuffer(audioPath);
-    if (!raw || raw.length === 0) return { pcmBuffer: null };
-    const ext = path.extname(audioPath).toLowerCase();
+    if (!raw || raw.length === 0) return { audioBuffer: null };
     const name = path.basename(audioPath);
-    if (ext === ".wav" && raw.length > WAV_HEADER_BYTES) {
-      return { pcmBuffer: raw.subarray(WAV_HEADER_BYTES), sourceLabel: `waiter WAV (${name})` };
-    }
-    if (ext === ".pcm") {
-      return { pcmBuffer: raw, sourceLabel: `waiter PCM (${name})` };
-    }
-    return { pcmBuffer: raw, sourceLabel: `waiter file (${name})` };
+    return { audioBuffer: raw, sourceLabel: `waiter audio (${name})` };
   } catch (err) {
     console.warn("[Soniox] MinIO download failed:", audioPath, err?.message);
-    return { pcmBuffer: null };
+    return { audioBuffer: null };
   }
 }
 
-function streamPcmToSocket(ws, pcmBuffer) {
+function streamAudioToSocket(ws, audioBuffer) {
   return new Promise((resolve, reject) => {
     let offset = 0;
     const interval = setInterval(() => {
@@ -53,7 +49,7 @@ function streamPcmToSocket(ws, pcmBuffer) {
         reject(new Error("Socket closed during prime"));
         return;
       }
-      const chunk = pcmBuffer.slice(offset, offset + PRIME_CHUNK_BYTES);
+      const chunk = audioBuffer.slice(offset, offset + PRIME_CHUNK_BYTES);
       if (chunk.length === 0) {
         clearInterval(interval);
         resolve();
@@ -66,29 +62,29 @@ function streamPcmToSocket(ws, pcmBuffer) {
 }
 
 async function primeWaiterVoice(sonioxWs, waiterEmail) {
-  let pcmBuffer = null;
+  let audioBuffer = null;
   let sourceLabel = "";
 
   if (waiterEmail) {
     const waiter = await Waiter.query().select("audio_path").findOne({ email: waiterEmail });
     if (waiter?.audio_path) {
       const result = await loadWaiterAudioFromMinio(waiter.audio_path);
-      if (result.pcmBuffer) {
-        pcmBuffer = result.pcmBuffer;
+      if (result.audioBuffer) {
+        audioBuffer = result.audioBuffer;
         sourceLabel = result.sourceLabel;
       }
     }
   }
 
-  if (!pcmBuffer || pcmBuffer.length === 0) {
+  if (!audioBuffer || audioBuffer.length === 0) {
     console.warn("[Soniox] No waiter audio for priming — skipping");
     return;
   }
 
   console.log(
-    `[Soniox] Priming with ${sourceLabel}: ${pcmBuffer.length} bytes (~${(pcmBuffer.length / 32000).toFixed(1)}s)`
+    `[Soniox] Priming with ${sourceLabel}: ${audioBuffer.length} bytes`
   );
-  await streamPcmToSocket(sonioxWs, Buffer.from(pcmBuffer));
+  await streamAudioToSocket(sonioxWs, Buffer.from(audioBuffer));
   console.log("[Soniox] Priming done — live stream taking over");
 }
 
