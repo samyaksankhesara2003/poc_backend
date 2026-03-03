@@ -53,10 +53,10 @@ export function createSpeechmaticsSocketModify(clientWs) {
         }
     });
 
-    smWs.on("close", (code,reason) => {
+    smWs.on("close", (code, reason) => {
         console.log("🔌 Speechmatics disconnected");
         console.log("   Close Code:", code);
-        console.log("   Close Reason:", reason.toString() || "(no reason provided)");        
+        console.log("   Close Reason:", reason.toString() || "(no reason provided)");
     });
 
     smWs.on("error", (err) => {

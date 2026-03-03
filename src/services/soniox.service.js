@@ -9,7 +9,7 @@ const DEFAULT_CONFIG = {
   api_key: process.env.SONIOX_API_KEY,
   model: "stt-rt-v4",
   audio_format: "auto",
-  num_channels: 2,
+  num_channels: 1,
   language_hints: ["en"],
   language_hints_strict: true,
   enable_speaker_diarization: true,
