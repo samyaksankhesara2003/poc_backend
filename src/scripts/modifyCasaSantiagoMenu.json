@@ -1,0 +1,650 @@
+[
+    {
+        "id": "cs_tapas_1",
+        "text": "Dish: House Charcuterie Board. Category: Tapas. Cuisine: Spanish. Description: House selection of cured meats served with pan tumaca and olives. Price: 560.",
+        "metadata": {
+            "dish": "House Charcuterie Board",
+            "category": "Tapas",
+            "cuisine": "Spanish",
+            "price": 560,
+            "type": "non-veg",
+            "tags": [
+                "charcuterie",
+                "cured meats",
+                "tapas"
+            ]
+        }
+    },
+    {
+        "id": "cs_tapas_2",
+        "text": "Dish: Padron Peppers. Category: Tapas. Cuisine: Spanish. Description: Blistered padron peppers cooked with olive oil and sea salt. Price: 180.",
+        "metadata": {
+            "dish": "Padron Peppers",
+            "category": "Tapas",
+            "cuisine": "Spanish",
+            "price": 180,
+            "type": "veg",
+            "tags": [
+                "peppers",
+                "vegetarian",
+                "tapas"
+            ]
+        }
+    },
+    {
+        "id": "cs_tapas_3",
+        "text": "Dish: Asian Shishito Peppers. Category: Tapas. Cuisine: Spanish fusion. Description: Blistered shishito peppers served with Asian ranch sauce, gochugaru chili and furikake seasoning. Price: 200.",
+        "metadata": {
+            "dish": "Asian Shishito Peppers",
+            "category": "Tapas",
+            "cuisine": "Spanish fusion",
+            "price": 200,
+            "type": "veg",
+            "tags": [
+                "peppers",
+                "fusion tapas",
+                "vegetarian"
+            ]
+        }
+    },
+    {
+        "id": "cs_tapas_4",
+        "text": "Dish: Garlic Shrimp Gambas al Pil Pil. Category: Tapas. Cuisine: Spanish. Description: Shrimp sautéed in olive oil with garlic, chili and fresh parsley. Price: 260.",
+        "metadata": {
+            "dish": "Garlic Shrimp Gambas al Pil Pil",
+            "category": "Tapas",
+            "cuisine": "Spanish",
+            "price": 260,
+            "type": "non-veg",
+            "tags": [
+                "shrimp",
+                "seafood",
+                "garlic"
+            ]
+        }
+    },
+    {
+        "id": "cs_tapas_5",
+        "text": "Dish: Seasoned Olives. Category: Tapas. Cuisine: Mediterranean. Description: Mixed olives prepared with orange zest, garlic, Mediterranean spices and smoked paprika. Price: 160.",
+        "metadata": {
+            "dish": "Seasoned Olives",
+            "category": "Tapas",
+            "cuisine": "Mediterranean",
+            "price": 160,
+            "type": "veg",
+            "tags": [
+                "olives",
+                "vegetarian",
+                "mediterranean"
+            ]
+        }
+    },
+    {
+        "id": "cs_tapas_6",
+        "text": "Dish: House Marinated Shellfish. Category: Tapas. Cuisine: Spanish. Description: Escabeche clams and mussels served over crispy papalinas. Price: 280.",
+        "metadata": {
+            "dish": "House Marinated Shellfish",
+            "category": "Tapas",
+            "cuisine": "Spanish",
+            "price": 280,
+            "type": "non-veg",
+            "tags": [
+                "shellfish",
+                "clams",
+                "mussels"
+            ]
+        }
+    },
+    {
+        "id": "cs_tapas_7",
+        "text": "Dish: Txistorra Sausage. Category: Tapas. Cuisine: Spanish. Description: Txistorra sausage sautéed in port wine over labneh with parsley and served with pan tumaca. Price: 285.",
+        "metadata": {
+            "dish": "Txistorra Sausage",
+            "category": "Tapas",
+            "cuisine": "Spanish",
+            "price": 285,
+            "type": "non-veg",
+            "tags": [
+                "sausage",
+                "port wine",
+                "tapas"
+            ]
+        }
+    },
+    {
+        "id": "cs_tapas_8",
+        "text": "Dish: Mussels in Creamy Brava Sauce. Category: Tapas. Cuisine: Spanish fusion. Description: Mussels cooked in creamy brava sauce with coconut milk. Price: 350.",
+        "metadata": {
+            "dish": "Mussels in Creamy Brava Sauce",
+            "category": "Tapas",
+            "cuisine": "Spanish fusion",
+            "price": 350,
+            "type": "non-veg",
+            "tags": [
+                "mussels",
+                "seafood",
+                "brava sauce"
+            ]
+        }
+    },
+    {
+        "id": "cs_tapas_9",
+        "text": "Dish: Vermouth Mushrooms. Category: Tapas. Cuisine: Spanish. Description: Mushrooms sautéed in vermouth, garlic, butter and lemon served with pan tumaca. Price: 265.",
+        "metadata": {
+            "dish": "Vermouth Mushrooms",
+            "category": "Tapas",
+            "cuisine": "Spanish",
+            "price": 265,
+            "type": "veg",
+            "tags": [
+                "mushrooms",
+                "vegetarian",
+                "vermouth"
+            ]
+        }
+    },
+    {
+        "id": "cs_tapas_10",
+        "text": "Dish: Spanish Tortilla. Category: Tapas. Cuisine: Spanish. Description: Classic potato tortilla served with aioli and caramelized onion. Price: 320.",
+        "metadata": {
+            "dish": "Spanish Tortilla",
+            "category": "Tapas",
+            "cuisine": "Spanish",
+            "price": 320,
+            "type": "veg",
+            "tags": [
+                "tortilla",
+                "potato",
+                "spanish classic"
+            ]
+        }
+    },
+    {
+        "id": "cs_tapas_11",
+        "text": "Dish: Spanish Tortilla with Chorizo. Category: Tapas. Cuisine: Spanish. Description: Potato tortilla with Spanish chorizo served with aioli and caramelized onion. Price: 380.",
+        "metadata": {
+            "dish": "Spanish Tortilla with Chorizo",
+            "category": "Tapas",
+            "cuisine": "Spanish",
+            "price": 380,
+            "type": "non-veg",
+            "tags": [
+                "chorizo",
+                "tortilla",
+                "spanish"
+            ]
+        }
+    },
+    {
+        "id": "cs_tapas_12",
+        "text": "Dish: Patatas Bravas Classic. Category: Tapas. Cuisine: Spanish. Description: Crispy potatoes served with aioli and traditional brava sauce. Price: 220.",
+        "metadata": {
+            "dish": "Patatas Bravas Classic",
+            "category": "Tapas",
+            "cuisine": "Spanish",
+            "price": 220,
+            "type": "veg",
+            "tags": [
+                "potatoes",
+                "brava sauce",
+                "vegetarian"
+            ]
+        }
+    },
+    {
+        "id": "cs_tapas_13",
+        "text": "Dish: Patatas Bravas Asian. Category: Tapas. Cuisine: Spanish fusion. Description: Crispy potatoes served with Asian ranch sauce, sriracha and furikake seasoning. Price: 220.",
+        "metadata": {
+            "dish": "Patatas Bravas Asian",
+            "category": "Tapas",
+            "cuisine": "Spanish fusion",
+            "price": 220,
+            "type": "veg",
+            "tags": [
+                "fusion",
+                "potatoes",
+                "spicy"
+            ]
+        }
+    },
+    {
+        "id": "cs_tapas_14",
+        "text": "Dish: Patatas Bravas American. Category: Tapas. Cuisine: American fusion. Description: Crispy potatoes served with smoked BBQ sauce and bacon. Price: 220.",
+        "metadata": {
+            "dish": "Patatas Bravas American",
+            "category": "Tapas",
+            "cuisine": "American fusion",
+            "price": 220,
+            "type": "non-veg",
+            "tags": [
+                "bbq",
+                "bacon",
+                "potatoes"
+            ]
+        }
+    },
+    {
+        "id": "cs_tapas_15",
+        "text": "Dish: Mushroom Croquettes. Category: Tapas. Cuisine: Spanish. Description: Crispy croquettes filled with creamy mushroom mixture. Price: 175.",
+        "metadata": {
+            "dish": "Mushroom Croquettes",
+            "category": "Tapas",
+            "cuisine": "Spanish",
+            "price": 175,
+            "type": "veg",
+            "tags": [
+                "croquettes",
+                "mushroom",
+                "vegetarian"
+            ]
+        }
+    },
+    {
+        "id": "cs_tapas_16",
+        "text": "Dish: Spanish Chorizo Croquettes. Category: Tapas. Cuisine: Spanish. Description: Crispy croquettes filled with Spanish chorizo. Price: 165.",
+        "metadata": {
+            "dish": "Spanish Chorizo Croquettes",
+            "category": "Tapas",
+            "cuisine": "Spanish",
+            "price": 165,
+            "type": "non-veg",
+            "tags": [
+                "croquettes",
+                "chorizo",
+                "spanish"
+            ]
+        }
+    },
+    {
+        "id": "cs_sandwich_1",
+        "text": "Dish: CS Cheeseburger. Category: Sandwich. Cuisine: American. Description: Beef cheeseburger with 100 percent beef patty served with house cheese sauce, aioli and piquillo peppers. Price: 300.",
+        "metadata": {
+            "dish": "CS Cheeseburger",
+            "category": "Sandwich",
+            "cuisine": "American",
+            "price": 300,
+            "type": "non-veg",
+            "tags": [
+                "beef",
+                "burger",
+                "cheese"
+            ]
+        }
+    },
+    {
+        "id": "cs_sandwich_2",
+        "text": "Dish: Serrano and Mushroom Sandwich. Category: Sandwich. Cuisine: Spanish. Description: Serrano ham sandwich with vermouth mushrooms, parmesan cheese and tumaca. Price: 305.",
+        "metadata": {
+            "dish": "Serrano & Mushroom Sandwich",
+            "category": "Sandwich",
+            "cuisine": "Spanish",
+            "price": 305,
+            "type": "non-veg",
+            "tags": [
+                "serrano ham",
+                "mushroom",
+                "spanish sandwich"
+            ]
+        }
+    },
+    {
+        "id": "cs_sandwich_3",
+        "text": "Dish: Roast Beef Sandwich. Category: Sandwich. Cuisine: European. Description: Cold roast beef sandwich served with tonnato sauce, capers, arugula and tomato. Price: 300.",
+        "metadata": {
+            "dish": "Roast Beef Sandwich",
+            "category": "Sandwich",
+            "cuisine": "European",
+            "price": 300,
+            "type": "non-veg",
+            "tags": [
+                "roast beef",
+                "capers",
+                "arugula"
+            ]
+        }
+    },
+    {
+        "id": "cs_sandwich_4",
+        "text": "Dish: Pepper Steak Sandwich. Category: Sandwich. Cuisine: American. Description: Beef filet sandwich served with pepper sauce, crispy onion and gouda cheese. Price: 315.",
+        "metadata": {
+            "dish": "Pepper Steak Sandwich",
+            "category": "Sandwich",
+            "cuisine": "American",
+            "price": 315,
+            "type": "non-veg",
+            "tags": [
+                "steak",
+                "pepper sauce",
+                "gouda"
+            ]
+        }
+    },
+    {
+        "id": "cs_sandwich_5",
+        "text": "Dish: Tuna Sandwich. Category: Sandwich. Cuisine: Asian fusion. Description: Tuna sandwich with white miso aioli, sesame oil, cucumbers, green apple and sriracha served on a baguette. Price: 295.",
+        "metadata": {
+            "dish": "Tuna Sandwich",
+            "category": "Sandwich",
+            "cuisine": "Asian fusion",
+            "price": 295,
+            "type": "non-veg",
+            "tags": [
+                "tuna",
+                "miso aioli",
+                "seafood"
+            ]
+        }
+    },
+    {
+        "id": "cs_sandwich_6",
+        "text": "Dish: Chicken Milanesa Sandwich. Category: Sandwich. Cuisine: Latin. Description: Breaded chicken sandwich served with basil dressing, cucumber, lettuce, tomato and pepperoncini. Price: 315.",
+        "metadata": {
+            "dish": "Chicken Milanesa Sandwich",
+            "category": "Sandwich",
+            "cuisine": "Latin",
+            "price": 315,
+            "type": "non-veg",
+            "tags": [
+                "chicken",
+                "milanesa",
+                "breaded"
+            ]
+        }
+    },
+    {
+        "id": "cs_salad_1",
+        "text": "Dish: Mediterranean Salad. Category: Salads & Cold Plates. Cuisine: Mediterranean. Description: Mixed lettuce salad with grilled chicken, roasted padron peppers, tomato, cucumber, red onion, feta cheese and black olives served with green dressing. Price: 275.",
+        "metadata": {
+            "dish": "Mediterranean Salad",
+            "category": "Salads & Cold Plates",
+            "cuisine": "Mediterranean",
+            "price": 275,
+            "type": "non-veg",
+            "tags": [
+                "chicken salad",
+                "mediterranean",
+                "feta cheese"
+            ]
+        }
+    },
+    {
+        "id": "cs_salad_2",
+        "text": "Dish: Smoked Caesar. Category: Salads & Cold Plates. Cuisine: American. Description: Charred romaine lettuce salad with grilled chicken served with smoked Caesar dressing and parmesan cheese. Price: 290.",
+        "metadata": {
+            "dish": "Smoked Caesar",
+            "category": "Salads & Cold Plates",
+            "cuisine": "American",
+            "price": 290,
+            "type": "non-veg",
+            "tags": [
+                "caesar salad",
+                "grilled chicken",
+                "parmesan"
+            ]
+        }
+    },
+    {
+        "id": "cs_salad_3",
+        "text": "Dish: Asian Cucumber Salad. Category: Salads & Cold Plates. Cuisine: Asian fusion. Description: Lightly charred cucumber salad with curry rice crisps, red onion, wakame, cilantro and citrus Asian vinaigrette served with chopped shrimp. Price: 320.",
+        "metadata": {
+            "dish": "Asian Cucumber Salad",
+            "category": "Salads & Cold Plates",
+            "cuisine": "Asian fusion",
+            "price": 320,
+            "type": "non-veg",
+            "tags": [
+                "cucumber salad",
+                "shrimp",
+                "asian"
+            ]
+        }
+    },
+    {
+        "id": "cs_salad_4",
+        "text": "Dish: Iberian Salad. Category: Salads & Cold Plates. Cuisine: Spanish. Description: Romaine lettuce salad with tomatoes, black olives, roasted marinated artichokes, Serrano ham and Manchego cheese served with sherry paprika vinaigrette. Price: 300.",
+        "metadata": {
+            "dish": "Iberian Salad",
+            "category": "Salads & Cold Plates",
+            "cuisine": "Spanish",
+            "price": 300,
+            "type": "non-veg",
+            "tags": [
+                "serrano ham",
+                "manchego",
+                "spanish salad"
+            ]
+        }
+    },
+    {
+        "id": "cs_salad_5",
+        "text": "Dish: Beet Carpaccio. Category: Salads & Cold Plates. Cuisine: Mediterranean. Description: Smoked beet carpaccio served with chevre cheese, arugula, clementines, walnuts, shiitake salt, basil oil, preserved lemon and capers. Price: 360.",
+        "metadata": {
+            "dish": "Beet Carpaccio",
+            "category": "Salads & Cold Plates",
+            "cuisine": "Mediterranean",
+            "price": 360,
+            "type": "veg",
+            "tags": [
+                "beet",
+                "carpaccio",
+                "vegetarian"
+            ]
+        }
+    },
+    {
+        "id": "cs_salad_6",
+        "text": "Dish: Roast Beef Carpaccio. Category: Salads & Cold Plates. Cuisine: European. Description: Roast beef carpaccio served with tonnato sauce, arugula, capers, black olive ash, red onion, tumaca and parmesan cheese. Price: 360.",
+        "metadata": {
+            "dish": "Roast Beef Carpaccio",
+            "category": "Salads & Cold Plates",
+            "cuisine": "European",
+            "price": 360,
+            "type": "non-veg",
+            "tags": [
+                "roast beef",
+                "carpaccio",
+                "capers"
+            ]
+        }
+    },
+    {
+        "id": "cs_main_1",
+        "text": "Dish: Pepper Steak. Category: Main Course. Cuisine: American. Description: Beef filet served with pepper sauce and crispy onions. Served with two side dishes. Price: 380.",
+        "metadata": {
+            "dish": "Pepper Steak",
+            "category": "Main Course",
+            "cuisine": "American",
+            "price": 380,
+            "type": "non-veg",
+            "tags": [
+                "beef",
+                "steak",
+                "pepper sauce"
+            ]
+        }
+    },
+    {
+        "id": "cs_main_2",
+        "text": "Dish: Lemon Fish. Category: Main Course. Cuisine: Mediterranean. Description: Fish filet cooked with lemon butter, capers, white wine and herbs. Served with two side dishes. Price: 320.",
+        "metadata": {
+            "dish": "Lemon Fish",
+            "category": "Main Course",
+            "cuisine": "Mediterranean",
+            "price": 320,
+            "type": "non-veg",
+            "tags": [
+                "fish",
+                "seafood",
+                "lemon butter"
+            ]
+        }
+    },
+    {
+        "id": "cs_main_3",
+        "text": "Dish: Chicken Marbella. Category: Main Course. Cuisine: Mediterranean. Description: Roasted boneless chicken thigh cooked with white wine sauce, green olives, capers and prunes. Served with two side dishes. Price: 300.",
+        "metadata": {
+            "dish": "Chicken Marbella",
+            "category": "Main Course",
+            "cuisine": "Mediterranean",
+            "price": 300,
+            "type": "non-veg",
+            "tags": [
+                "chicken",
+                "olives",
+                "white wine"
+            ]
+        }
+    },
+    {
+        "id": "cs_main_4",
+        "text": "Dish: Milanesa Santi. Category: Main Course. Cuisine: Latin. Description: Breaded chicken milanesa served with cherry tomato and orange sauce topped with gratinated gouda cheese. Served with two side dishes. Price: 320.",
+        "metadata": {
+            "dish": "Milanesa Santi",
+            "category": "Main Course",
+            "cuisine": "Latin",
+            "price": 320,
+            "type": "non-veg",
+            "tags": [
+                "chicken",
+                "milanesa",
+                "gouda"
+            ]
+        }
+    },
+    {
+        "id": "cs_whitewine_1",
+        "text": "Dish: Garzón Reserva Albariño. Category: White Wine. Cuisine: Uruguayan. Description: Garzón Reserva Albariño white wine from Uruguay vintage 2024. Price: 800.",
+        "metadata": {
+            "dish": "Garzón Reserva Albariño",
+            "category": "White Wine",
+            "cuisine": "Uruguayan",
+            "price": 800,
+            "type": "beverage",
+            "tags": [
+                "wine",
+                "white-wine",
+                "albariño",
+                "uruguay"
+            ]
+        }
+    },
+    {
+        "id": "cs_whitewine_2",
+        "text": "Dish: Protos Verdejo. Category: White Wine. Cuisine: Spanish. Description: Protos Verdejo white wine from Rueda Spain vintage 2024. Price: 750.",
+        "metadata": {
+            "dish": "Protos Verdejo",
+            "category": "White Wine",
+            "cuisine": "Spanish",
+            "price": 750,
+            "type": "beverage",
+            "tags": [
+                "wine",
+                "white-wine",
+                "verdejo",
+                "spain"
+            ]
+        }
+    },
+    {
+        "id": "cs_whitewine_3",
+        "text": "Dish: Ca’Bolani Pinot Grigio. Category: White Wine. Cuisine: Italian. Description: Ca’Bolani Pinot Grigio white wine from Venezia Italy vintage 2022. Price: 780.",
+        "metadata": {
+            "dish": "Ca’Bolani Pinot Grigio",
+            "category": "White Wine",
+            "cuisine": "Italian",
+            "price": 780,
+            "type": "beverage",
+            "tags": [
+                "wine",
+                "white-wine",
+                "pinot-grigio",
+                "italy"
+            ]
+        }
+    },
+    {
+        "id": "cs_redwine_1",
+        "text": "Dish: Luz de Noche Malbec. Category: Red Wine. Cuisine: Argentinian. Description: Luz de Noche Malbec red wine from Mendoza Argentina vintage 2022. Price: 800.",
+        "metadata": {
+            "dish": "Luz de Noche Malbec",
+            "category": "Red Wine",
+            "cuisine": "Argentinian",
+            "price": 800,
+            "type": "beverage",
+            "tags": [
+                "wine",
+                "red-wine",
+                "malbec",
+                "argentina"
+            ]
+        }
+    },
+    {
+        "id": "cs_redwine_2",
+        "text": "Dish: Conde Valdemar Tempranillo. Category: Red Wine. Cuisine: Spanish. Description: Conde Valdemar Tempranillo red wine from Rioja Spain vintage 2022. Price: 700.",
+        "metadata": {
+            "dish": "Conde Valdemar Tempranillo",
+            "category": "Red Wine",
+            "cuisine": "Spanish",
+            "price": 700,
+            "type": "beverage",
+            "tags": [
+                "wine",
+                "red-wine",
+                "tempranillo",
+                "spain"
+            ]
+        }
+    },
+    {
+        "id": "cs_redwine_3",
+        "text": "Dish: Vivanco Crianza Tempranillo. Category: Red Wine. Cuisine: Spanish. Description: Vivanco Crianza Tempranillo red wine from Rioja Spain vintage 2022. Price: 700.",
+        "metadata": {
+            "dish": "Vivanco Crianza Tempranillo",
+            "category": "Red Wine",
+            "cuisine": "Spanish",
+            "price": 700,
+            "type": "beverage",
+            "tags": [
+                "wine",
+                "red-wine",
+                "tempranillo",
+                "spain"
+            ]
+        }
+    },
+    {
+        "id": "cs_redwine_4",
+        "text": "Dish: Protos Roble Tempranillo. Category: Red Wine. Cuisine: Spanish. Description: Protos Roble Tempranillo red wine from Ribera del Duero Spain vintage 2022. Price: 850.",
+        "metadata": {
+            "dish": "Protos Roble Tempranillo",
+            "category": "Red Wine",
+            "cuisine": "Spanish",
+            "price": 850,
+            "type": "beverage",
+            "tags": [
+                "wine",
+                "red-wine",
+                "tempranillo",
+                "spain"
+            ]
+        }
+    },
+    {
+        "id": "cs_redwine_5",
+        "text": "Dish: Bogle Essential Red Blend. Category: Red Wine. Cuisine: American. Description: Bogle Essential Red Blend red wine from California United States vintage 2019. Price: 750.",
+        "metadata": {
+            "dish": "Bogle Essential Red Blend",
+            "category": "Red Wine",
+            "cuisine": "American",
+            "price": 750,
+            "type": "beverage",
+            "tags": [
+                "wine",
+                "red-wine",
+                "red-blend",
+                "usa"
+            ]
+        }
+    }
+]

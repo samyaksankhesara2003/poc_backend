@@ -1,0 +1,362 @@
+[
+    {
+        "id": "cs_tapas_1",
+        "text": "House Charcuterie Board is a tapas dish with cured meats served with pan tumaca and olives. Price is 560.",
+        "metadata": {
+            "dish": "House Charcuterie Board",
+            "category": "Tapas",
+            "price": 560
+        }
+    },
+    {
+        "id": "cs_tapas_2",
+        "text": "Padron Peppers is a tapas dish with blistered padron peppers cooked with olive oil and sea salt. Price is 180.",
+        "metadata": {
+            "dish": "Padron Peppers",
+            "category": "Tapas",
+            "price": 180
+        }
+    },
+    {
+        "id": "cs_tapas_3",
+        "text": "Asian Shishito Peppers is a tapas dish with blistered peppers served with Asian ranch sauce, gochugaru chili and furikake. Price is 200.",
+        "metadata": {
+            "dish": "Asian Shishito Peppers",
+            "category": "Tapas",
+            "price": 200
+        }
+    },
+    {
+        "id": "cs_tapas_4",
+        "text": "Garlic Shrimp Gambas al Pil Pil is a tapas dish with shrimp sauteed in olive oil with garlic, chili and fresh parsley. Price is 260.",
+        "metadata": {
+            "dish": "Garlic Shrimp",
+            "category": "Tapas",
+            "price": 260
+        }
+    },
+    {
+        "id": "cs_tapas_5",
+        "text": "Seasoned Olives is a tapas dish with mixed olives prepared with orange zest, garlic, Mediterranean spices and smoked paprika. Price is 160.",
+        "metadata": {
+            "dish": "Seasoned Olives",
+            "category": "Tapas",
+            "price": 160
+        }
+    },
+    {
+        "id": "cs_tapas_6",
+        "text": "House Marinated Shellfish is a tapas dish with escabeche clams and mussels served over crispy papalinas. Price is 280.",
+        "metadata": {
+            "dish": "House Marinated Shellfish",
+            "category": "Tapas",
+            "price": 280
+        }
+    },
+    {
+        "id": "cs_tapas_7",
+        "text": "Txistorra Sausage is a tapas dish with txistorra sausage sauteed in port wine over labneh with parsley and served with pan tumaca. Price is 285.",
+        "metadata": {
+            "dish": "Txistorra Sausage",
+            "category": "Tapas",
+            "price": 285
+        }
+    },
+    {
+        "id": "cs_tapas_8",
+        "text": "Mussels in Creamy Brava Sauce is a tapas dish with mussels cooked in creamy brava sauce with coconut milk. Price is 350.",
+        "metadata": {
+            "dish": "Mussels in Creamy Brava Sauce",
+            "category": "Tapas",
+            "price": 350
+        }
+    },
+    {
+        "id": "cs_tapas_9",
+        "text": "Vermouth Mushrooms is a tapas dish with mushrooms sauteed in vermouth, garlic, butter and lemon served with pan tumaca. Price is 265.",
+        "metadata": {
+            "dish": "Vermouth Mushrooms",
+            "category": "Tapas",
+            "price": 265
+        }
+    },
+    {
+        "id": "cs_tapas_10",
+        "text": "Spanish Tortilla is a tapas dish made with classic potato tortilla served with aioli and caramelized onion. Price is 320.",
+        "metadata": {
+            "dish": "Spanish Tortilla",
+            "category": "Tapas",
+            "price": 320
+        }
+    },
+    {
+        "id": "cs_tapas_11",
+        "text": "Spanish Tortilla with Chorizo is a tapas dish with potato tortilla and Spanish chorizo served with aioli and caramelized onion. Price is 380.",
+        "metadata": {
+            "dish": "Spanish Tortilla with Chorizo",
+            "category": "Tapas",
+            "price": 380
+        }
+    },
+    {
+        "id": "cs_tapas_12",
+        "text": "Patatas Bravas Classic is a tapas dish with potatoes served with aioli and brava sauce. Price is 220.",
+        "metadata": {
+            "dish": "Patatas Bravas Classic",
+            "category": "Tapas",
+            "price": 220
+        }
+    },
+    {
+        "id": "cs_tapas_13",
+        "text": "Patatas Bravas Asian is a tapas dish with potatoes served with Asian ranch sauce, sriracha and furikake. Price is 220.",
+        "metadata": {
+            "dish": "Patatas Bravas Asian",
+            "category": "Tapas",
+            "price": 220
+        }
+    },
+    {
+        "id": "cs_tapas_14",
+        "text": "Patatas Bravas American is a tapas dish with potatoes served with smoked BBQ sauce and bacon. Price is 220.",
+        "metadata": {
+            "dish": "Patatas Bravas American",
+            "category": "Tapas",
+            "price": 220
+        }
+    },
+    {
+        "id": "cs_tapas_15",
+        "text": "Mushroom Croquettes is a tapas dish with creamy mushroom croquettes. Price is 175.",
+        "metadata": {
+            "dish": "Mushroom Croquettes",
+            "category": "Tapas",
+            "price": 175
+        }
+    },
+    {
+        "id": "cs_tapas_16",
+        "text": "Spanish Chorizo Croquettes is a tapas dish with chorizo croquettes. Price is 165.",
+        "metadata": {
+            "dish": "Spanish Chorizo Croquettes",
+            "category": "Tapas",
+            "price": 165
+        }
+    },
+    {
+        "id": "cs_sandwich_1",
+        "text": "CS Cheeseburger is a sandwich with a 100 percent beef patty served with house cheese sauce, aioli and piquillo peppers. Price is 300.",
+        "metadata": {
+            "dish": "CS Cheeseburger",
+            "category": "Sandwich",
+            "price": 300
+        }
+    },
+    {
+        "id": "cs_sandwich_2",
+        "text": "Serrano and Mushroom Sandwich is a sandwich with Serrano ham, vermouth mushrooms, parmesan and tumaca. Price is 305.",
+        "metadata": {
+            "dish": "Serrano & Mushroom Sandwich",
+            "category": "Sandwich",
+            "price": 305
+        }
+    },
+    {
+        "id": "cs_sandwich_3",
+        "text": "Roast Beef Sandwich is a sandwich with cold roast beef slices served with tonnato sauce, capers, arugula and tomato. Price is 300.",
+        "metadata": {
+            "dish": "Roast Beef Sandwich",
+            "category": "Sandwich",
+            "price": 300
+        }
+    },
+    {
+        "id": "cs_sandwich_4",
+        "text": "Pepper Steak Sandwich is a sandwich with beef filet served with pepper sauce, crispy onion and gouda cheese. Price is 315.",
+        "metadata": {
+            "dish": "Pepper Steak Sandwich",
+            "category": "Sandwich",
+            "price": 315
+        }
+    },
+    {
+        "id": "cs_sandwich_5",
+        "text": "Tuna Sandwich is a sandwich with tuna, white miso aioli, sesame oil, cucumbers, green apple and sriracha served on a baguette. Price is 295.",
+        "metadata": {
+            "dish": "Tuna Sandwich",
+            "category": "Sandwich",
+            "price": 295
+        }
+    },
+    {
+        "id": "cs_sandwich_6",
+        "text": "Chicken Milanesa Sandwich is a sandwich with breaded chicken served with basil dressing, cucumber, lettuce, tomato and pepperoncini. Price is 315.",
+        "metadata": {
+            "dish": "Chicken Milanesa Sandwich",
+            "category": "Sandwich",
+            "price": 315
+        }
+    },
+    {
+        "id": "cs_salad_1",
+        "text": "Mediterranean Salad is a salad with mixed lettuce, grilled chicken, roasted padron peppers, tomato, cucumber, red onion, feta cheese and black olives served with green dressing. Price is 275.",
+        "metadata": {
+            "dish": "Mediterranean Salad",
+            "category": "Salads & Cold Plates",
+            "price": 275
+        }
+    },
+    {
+        "id": "cs_salad_2",
+        "text": "Smoked Caesar is a salad with charred romaine lettuce and grilled chicken served with smoked Caesar dressing and parmesan cheese. Price is 290.",
+        "metadata": {
+            "dish": "Smoked Caesar",
+            "category": "Salads & Cold Plates",
+            "price": 290
+        }
+    },
+    {
+        "id": "cs_salad_3",
+        "text": "Asian Cucumber Salad is a salad with lightly charred cucumber, curry rice crisps, red onion, wakame, cilantro and citrus Asian vinaigrette with chopped shrimp. Price is 320.",
+        "metadata": {
+            "dish": "Asian Cucumber Salad",
+            "category": "Salads & Cold Plates",
+            "price": 320
+        }
+    },
+    {
+        "id": "cs_salad_4",
+        "text": "Iberian Salad is a salad with romaine lettuce, tomatoes, black olives, roasted marinated artichokes, Serrano ham and Manchego cheese served with sherry paprika vinaigrette. Price is 300.",
+        "metadata": {
+            "dish": "Iberian Salad",
+            "category": "Salads & Cold Plates",
+            "price": 300
+        }
+    },
+    {
+        "id": "cs_salad_5",
+        "text": "Beet Carpaccio is a cold plate with smoked beet slices served with chevre cheese, arugula, clementines, walnuts, shiitake salt, basil oil, preserved lemon and capers. Price is 360.",
+        "metadata": {
+            "dish": "Beet Carpaccio",
+            "category": "Salads & Cold Plates",
+            "price": 360
+        }
+    },
+    {
+        "id": "cs_salad_6",
+        "text": "Roast Beef Carpaccio is a cold plate with roast beef slices served with tonnato sauce, arugula, capers, black olive ash, red onion, tumaca and parmesan cheese. Price is 360.",
+        "metadata": {
+            "dish": "Roast Beef Carpaccio",
+            "category": "Salads & Cold Plates",
+            "price": 360
+        }
+    },
+    {
+        "id": "cs_main_1",
+        "text": "Pepper Steak is a main course dish made with beef filet served with pepper sauce and crispy onions. This dish includes two sides. Price is 380.",
+        "metadata": {
+            "dish": "Pepper Steak",
+            "category": "Main Course",
+            "price": 380
+        }
+    },
+    {
+        "id": "cs_main_2",
+        "text": "Lemon Fish is a main course dish with fish filet cooked with lemon butter, capers, white wine and herbs. This dish includes two sides. Price is 320.",
+        "metadata": {
+            "dish": "Lemon Fish",
+            "category": "Main Course",
+            "price": 320
+        }
+    },
+    {
+        "id": "cs_main_3",
+        "text": "Chicken Marbella is a main course dish with roasted boneless chicken thigh cooked with white wine sauce, green olives, capers and prunes. This dish includes two sides. Price is 300.",
+        "metadata": {
+            "dish": "Chicken Marbella",
+            "category": "Main Course",
+            "price": 300
+        }
+    },
+    {
+        "id": "cs_main_4",
+        "text": "Milanesa Santi is a main course dish with chicken milanesa served with cherry tomato and orange sauce topped with gratinated gouda cheese. This dish includes two sides. Price is 320.",
+        "metadata": {
+            "dish": "Milanesa Santi",
+            "category": "Main Course",
+            "price": 320
+        }
+    },
+    {
+        "id": "cs_whitewine_1",
+        "text": "Garzon Reserva Albarino is a white wine from Uruguay vintage 2024. Price is 800.",
+        "metadata": {
+            "dish": "Garzón Reserva Albariño",
+            "category": "White Wine",
+            "price": 800
+        }
+    },
+    {
+        "id": "cs_whitewine_2",
+        "text": "Protos Verdejo is a white wine from Rueda Spain vintage 2024. Price is 750.",
+        "metadata": {
+            "dish": "Protos Verdejo",
+            "category": "White Wine",
+            "price": 750
+        }
+    },
+    {
+        "id": "cs_whitewine_3",
+        "text": "CaBolani Pinot Grigio is a white wine from Venezia Italy vintage 2022. Price is 780.",
+        "metadata": {
+            "dish": "Ca’Bolani Pinot Grigio",
+            "category": "White Wine",
+            "price": 780
+        }
+    },
+    {
+        "id": "cs_redwine_1",
+        "text": "Luz de Noche Malbec is a red wine from Mendoza Argentina vintage 2022. Price is 800.",
+        "metadata": {
+            "dish": "Luz de Noche Malbec",
+            "category": "Red Wine",
+            "price": 800
+        }
+    },
+    {
+        "id": "cs_redwine_2",
+        "text": "Conde Valdemar Tempranillo is a red wine from Rioja Spain vintage 2022. Price is 700.",
+        "metadata": {
+            "dish": "Conde Valdemar Tempranillo",
+            "category": "Red Wine",
+            "price": 700
+        }
+    },
+    {
+        "id": "cs_redwine_3",
+        "text": "Vivanco Crianza Tempranillo is a red wine from Rioja Spain vintage 2022. Price is 700.",
+        "metadata": {
+            "dish": "Vivanco Crianza Tempranillo",
+            "category": "Red Wine",
+            "price": 700
+        }
+    },
+    {
+        "id": "cs_redwine_4",
+        "text": "Protos Roble Tempranillo is a red wine from Ribera del Duero Spain vintage 2022. Price is 850.",
+        "metadata": {
+            "dish": "Protos Roble Tempranillo",
+            "category": "Red Wine",
+            "price": 850
+        }
+    },
+    {
+        "id": "cs_redwine_5",
+        "text": "Bogle Essential Red Blend is a red wine from California United States vintage 2019. Price is 750.",
+        "metadata": {
+            "dish": "Bogle Essential Red Blend",
+            "category": "Red Wine",
+            "price": 750
+        }
+    }
+]
