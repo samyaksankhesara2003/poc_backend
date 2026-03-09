@@ -133,7 +133,6 @@ const generateEmbedding = async (text) => {
         // dimensions: 1536
 
     });
-    console.log(response, "response");
 
     return response.data[0].embedding;
 };
@@ -191,15 +190,96 @@ const uploadMenuWithEmbeddingService = async () => {
 };
 
 /**
+ * LLM Query Understanding — rewrites user query for semantic search.
+ * Returns { search_query, include_ingredients, exclude_ingredients }.
+ */
+// const QUERY_UNDERSTANDING_PROMPT = `You are a query understanding system for a restaurant menu semantic search engine.
+
+// Your job is to convert a user's natural language food request into a structured query for vector search.
+
+// Follow these rules:
+
+// 1. Identify the main food intent.
+// 2. Extract ingredients or food types the user wants.
+// 3. Extract ingredients or food types the user does NOT want.
+// 4. Rewrite the query into a clean semantic search query suitable for embedding.
+// 5. The rewritten query should NOT contain negation words like "not", "don't", "without".
+// 6. Focus on the positive search intent.
+// 7. If the query is NOT about food or restaurant menu items, set search_query to null.
+// 8. If the query ONLY expresses what the user doesn't want (without any positive intent), set search_query to null.
+// 9. Examples where search_query should be null:
+//    - "What's the weather like?" (not about food)
+//    - "I don't want pasta" (only negative, no positive intent)
+//    - "Tell me a joke" (not about food)
+//    - "Not interested in seafood" (only negative)
+// Return ONLY valid JSON in this format:
+
+// {
+// "search_query": "clean semantic query for embedding",
+// "include_ingredients": [],
+// "exclude_ingredients": [],
+// }
+// `;
+const QUERY_UNDERSTANDING_PROMPT = `You are a query understanding system for a restaurant menu semantic search engine.
+
+Your job is to convert a user's natural language food request into a structured query for vector search.
+
+Follow these rules:
+
+1. Identify the main food intent - what the user WANTS to find.
+2. Extract ingredients or food types the user wants in include_ingredients.
+3. Extract ingredients or food types the user does NOT want in exclude_ingredients.
+4. For search_query: write ONLY what the user wants to search for (positive intent).
+5. If the user only mentions what they DON'T want, or the query is not about food, set search_query to null.
+6. The search_query should NOT contain negation words like "not", "don't", "without".
+7. The search_query should describe the dish or food type they want to find, not what to exclude.
+
+Return ONLY valid JSON in this format:
+
+{
+  "search_query": "what user wants to find" OR null,
+  "include_ingredients": [],
+  "exclude_ingredients": []
+}
+
+`;
+const understandQuery = async (userQuery) => {
+    const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        temperature: 0,
+        response_format: { type: "json_object" },
+        messages: [
+            { role: "system", content: QUERY_UNDERSTANDING_PROMPT },
+            { role: "user", content: userQuery },
+        ],
+    });
+    return JSON.parse(response.choices[0].message.content);
+};
+
+/**
  * Search menu using OpenAI-generated query embedding against 'slefembedding' index.
+ * Adds an LLM query understanding layer to handle negation and intent extraction.
  */
 const searchMenuWithEmbeddingService = async (body) => {
     try {
         const { query, namespace } = body;
-        const ns = selfEmbeddingIndex.namespace(namespace || 'casasantiago_menu_openai');
 
-        // Generate embedding for the search query
-        const queryEmbedding = await generateEmbedding(query);
+        // Step 1: LLM Query Understanding
+        const understood = await understandQuery(query);
+        console.log('🧠 Query understanding:', JSON.stringify(understood));
+
+        // If search_query is empty, no food intent found — skip Pinecone
+        if (!understood.search_query) {
+            return {
+                // originalQuery: query,
+                // understood,
+                results: [],
+            };
+        }
+
+        // Step 2: Generate embedding from the rewritten search query
+        const ns = selfEmbeddingIndex.namespace(namespace || 'casasantiago_menu_openai');
+        const queryEmbedding = await generateEmbedding(understood.search_query);
 
         const response = await ns.query({
             vector: queryEmbedding,
@@ -207,16 +287,31 @@ const searchMenuWithEmbeddingService = async (body) => {
             includeMetadata: true,
         });
 
-        const results = response.matches?.map((match) => ({
-            id: match.id,
-            score: match.score,
-            dish: match.metadata?.dish,
-            category: match.metadata?.category,
-            price: match.metadata?.price,
-            description: match.metadata?.text,
-        }));
+        // Step 3: Filter out results that match exclude_ingredients
+        const excludeSet = (understood.exclude_ingredients || []).map((i) => i.toLowerCase());
 
-        return results;
+        const results = (response.matches || [])
+            .map((match) => ({
+                id: match.id,
+                score: match.score,
+                dish: match.metadata?.dish,
+                category: match.metadata?.category,
+                price: match.metadata?.price,
+                description: match.metadata?.text,
+            }))
+        // .filter((item) => {
+        //     if (excludeSet.length === 0) return true;
+        //     const text = (item.description || '').toLowerCase();
+        //     const dish = (item.dish || '').toLowerCase();
+        //     return !excludeSet.some((exc) => text.includes(exc) || dish.includes(exc));
+        // });
+
+        return {
+            // originalQuery: query,
+            // understood,
+            results,
+        };
+        // return "samyak"
     } catch (error) {
         console.error('searchMenuWithEmbeddingService error:', error);
         throw new Error(`Failed to search menu with embeddings: ${error.message}`);
