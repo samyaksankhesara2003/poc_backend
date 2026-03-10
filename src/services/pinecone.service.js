@@ -365,7 +365,7 @@ const searchMenuFromTranscript = async (transcriptText) => {
         // if (results.length > 0) {
         //     console.log('🔍 [TranscriptSearch] Top results:', JSON.stringify(results.slice(0, 3), null, 2));
         // }
-        console.log(results, ">>>>>>>>>>>>>>>>>>>>>.");
+        // console.log(results, ">>>>>>>>>>>>>>>>>>>>>.");
 
         return { understood, results };
         // return "samyak";

@@ -19,14 +19,12 @@ const DEFAULT_INTERVAL_MS = 6000; // 6 seconds (within the 5–7 s range)
 /**
  * @param {object}  opts
  * @param {number}  [opts.intervalMs=6000]  - Logging interval in ms
- * @param {string}  [opts.sessionId]        - Optional label for log lines
- * @param {(text: string, meta: object) => void} [opts.onInterval] - Optional
- *        callback invoked with the buffered text each interval.
- *        Useful for piping text into another service (e.g. searchMenuWithEmbeddingService).
+ * @param {WebSocket} [opts.clientWs]       - Browser WebSocket to send suggestions to
+ * @param {(text: string, meta: object) => void} [opts.onInterval] - Optional callback
  */
 export function createTranscriptionLogger(opts = {}) {
     const intervalMs = opts.intervalMs ?? DEFAULT_INTERVAL_MS;
-    // const sessionId = opts.sessionId ?? `sess_${Date.now()}`;
+    const clientWs = opts.clientWs ?? null;
     const onInterval = opts.onInterval ?? null;
 
     let buffer = [];
@@ -53,10 +51,19 @@ export function createTranscriptionLogger(opts = {}) {
         //     `📝 [TranscriptionLogger] Interval #${intervalCount}: "${collected}"`,
         // );
 
-        // Fire-and-forget: search the menu from the transcript (non-blocking)
-        pineconeService.searchMenuFromTranscript(collected).catch((err) => {
-            console.error('📝 [TranscriptionLogger] searchMenuFromTranscript error:', err.message);
-        });
+        // Fire-and-forget: search the menu and send results to the client
+        pineconeService.searchMenuFromTranscript(collected)
+            .then((result) => {
+                if (result?.results?.length > 0 && clientWs?.readyState === 1) {
+                    clientWs.send(JSON.stringify({
+                        message: "MenuSuggestions",
+                        results: result.results,
+                    }));
+                }
+            })
+            .catch((err) => {
+                console.error('📝 [TranscriptionLogger] searchMenuFromTranscript error:', err.message);
+            });
 
         if (typeof onInterval === "function") {
             try {
