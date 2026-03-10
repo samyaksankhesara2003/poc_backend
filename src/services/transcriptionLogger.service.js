@@ -3,6 +3,7 @@
  *
  * Factory function that returns a lightweight logger object.
  * It buffers Speechmatics AddTranscript text and logs it every ~6 seconds.
+ * On each flush it also fires a menu search via pineconeService.
  *
  * Usage:
  *   const logger = createTranscriptionLogger({ intervalMs: 6000 });
@@ -11,7 +12,9 @@
  *   logger.stop();
  */
 
-const DEFAULT_INTERVAL_MS = 6_000; // 6 seconds (within the 5–7 s range)
+import { pineconeService } from "./pinecone.service.js";
+
+const DEFAULT_INTERVAL_MS = 6000; // 6 seconds (within the 5–7 s range)
 
 /**
  * @param {object}  opts
@@ -23,7 +26,7 @@ const DEFAULT_INTERVAL_MS = 6_000; // 6 seconds (within the 5–7 s range)
  */
 export function createTranscriptionLogger(opts = {}) {
     const intervalMs = opts.intervalMs ?? DEFAULT_INTERVAL_MS;
-    const sessionId = opts.sessionId ?? `sess_${Date.now()}`;
+    // const sessionId = opts.sessionId ?? `sess_${Date.now()}`;
     const onInterval = opts.onInterval ?? null;
 
     let buffer = [];
@@ -40,22 +43,27 @@ export function createTranscriptionLogger(opts = {}) {
         buffer = [];
 
         const meta = {
-            sessionId,
+            // sessionId,
             intervalNumber: intervalCount,
             timestamp: new Date().toISOString(),
             fragmentCount: collected.split(" ").length,
         };
 
-        console.log(
-            `📝 [TranscriptionLogger][${sessionId}] Interval #${intervalCount}: "${collected}"`,
-        );
+        // console.log(
+        //     `📝 [TranscriptionLogger] Interval #${intervalCount}: "${collected}"`,
+        // );
+
+        // Fire-and-forget: search the menu from the transcript (non-blocking)
+        pineconeService.searchMenuFromTranscript(collected).catch((err) => {
+            console.error('📝 [TranscriptionLogger] searchMenuFromTranscript error:', err.message);
+        });
 
         if (typeof onInterval === "function") {
             try {
                 onInterval(collected, meta);
             } catch (err) {
                 console.error(
-                    `📝 [TranscriptionLogger][${sessionId}] onInterval callback error:`,
+                    `📝 [TranscriptionLogger] onInterval callback error:`,
                     err,
                 );
             }
@@ -66,9 +74,9 @@ export function createTranscriptionLogger(opts = {}) {
 
     function start() {
         if (timer) return;
-        console.log(
-            `📝 [TranscriptionLogger][${sessionId}] Started — logging every ${intervalMs / 1000}s`,
-        );
+        // console.log(
+        //     `📝 [TranscriptionLogger] Started — logging every ${intervalMs / 1000}s`,
+        // );
         timer = setInterval(flush, intervalMs);
     }
 
@@ -91,9 +99,9 @@ export function createTranscriptionLogger(opts = {}) {
             timer = null;
         }
         flush(); // final flush so we never lose trailing text
-        console.log(
-            `📝 [TranscriptionLogger][${sessionId}] Stopped after ${intervalCount} intervals`,
-        );
+        // console.log(
+        //     `📝 [TranscriptionLogger] Stopped after ${intervalCount} intervals`,
+        // );
     }
 
     return { start, push, stop };

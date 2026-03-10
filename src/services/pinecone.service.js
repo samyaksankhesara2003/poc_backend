@@ -322,11 +322,65 @@ const searchMenuWithEmbeddingService = async (body) => {
     }
 };
 
+/**
+ * Search menu from a raw transcript string (called by transcriptionLogger every ~6s).
+ * Reuses the same query-understanding + OpenAI-embedding pipeline.
+ */
+const searchMenuFromTranscript = async (transcriptText) => {
+    try {
+        if (!transcriptText || transcriptText.trim().length === 0) return null;
+        // console.log(transcriptText, "transcriptText");
+
+        // Step 1: LLM Query Understanding
+        const understood = await understandQuery(transcriptText);
+        console.log('🧠 [TranscriptSearch] Query understanding:', JSON.stringify(understood));
+
+        // No food intent detected — skip
+        if (!understood.search_query) {
+            // console.log('🔍 [TranscriptSearch] No food intent — skipping search');
+            return null;
+        }
+
+        // Step 2: Generate embedding and query Pinecone
+        const ns = selfEmbeddingIndex.namespace('casasantiago_menu_openai');
+        const queryEmbedding = await generateEmbedding(understood.search_query);
+
+        const response = await ns.query({
+            vector: queryEmbedding,
+            topK: 5,
+            includeMetadata: true,
+        });
+
+        // Step 3: Map results
+        const results = (response.matches || []).map((match) => ({
+            id: match.id,
+            score: match.score,
+            dish: match.metadata?.dish,
+            category: match.metadata?.category,
+            price: match.metadata?.price,
+            description: match.metadata?.text,
+        }));
+
+        // console.log(`🔍 [TranscriptSearch] Found ${results.length} results for "${understood.search_query}"`);
+        // if (results.length > 0) {
+        //     console.log('🔍 [TranscriptSearch] Top results:', JSON.stringify(results.slice(0, 3), null, 2));
+        // }
+        console.log(results, ">>>>>>>>>>>>>>>>>>>>>.");
+
+        return { understood, results };
+        // return "samyak";
+    } catch (error) {
+        console.error('🔍 [TranscriptSearch] Error:', error.message);
+        return null;
+    }
+};
+
 export const pineconeService = {
     getNamespacesService,
     getRecordsService,
     searchMenuService,
     uploadMenuService,
     uploadMenuWithEmbeddingService,
-    searchMenuWithEmbeddingService
+    searchMenuWithEmbeddingService,
+    searchMenuFromTranscript
 };

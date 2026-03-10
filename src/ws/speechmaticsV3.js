@@ -53,7 +53,7 @@ wss.on("connection", (clientWs, req) => {
   // Create a per-session transcription interval logger
   const transcriptionLogger = createTranscriptionLogger({
     intervalMs: 6000,           // flush every 6 seconds (5–7 s range)
-    sessionId: `sm_${Date.now()}`,
+    // sessionId: `sm_${Date.now()}`,
     // Optional: pipe the collected text into another service
     // onInterval: (text, meta) => { /* e.g. call searchMenuWithEmbeddingService */ },
   });
