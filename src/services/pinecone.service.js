@@ -189,50 +189,47 @@ const uploadMenuWithEmbeddingService = async () => {
     }
 };
 
-/**
- * LLM Query Understanding — rewrites user query for semantic search.
- * Returns { search_query, include_ingredients, exclude_ingredients }.
- */
 // const QUERY_UNDERSTANDING_PROMPT = `You are a query understanding system for a restaurant menu semantic search engine.
 
 // Your job is to convert a user's natural language food request into a structured query for vector search.
 
 // Follow these rules:
 
-// 1. Identify the main food intent.
-// 2. Extract ingredients or food types the user wants.
-// 3. Extract ingredients or food types the user does NOT want.
-// 4. Rewrite the query into a clean semantic search query suitable for embedding.
-// 5. The rewritten query should NOT contain negation words like "not", "don't", "without".
-// 6. Focus on the positive search intent.
-// 7. If the query is NOT about food or restaurant menu items, set search_query to null.
-// 8. If the query ONLY expresses what the user doesn't want (without any positive intent), set search_query to null.
-// 9. Examples where search_query should be null:
-//    - "What's the weather like?" (not about food)
-//    - "I don't want pasta" (only negative, no positive intent)
-//    - "Tell me a joke" (not about food)
-//    - "Not interested in seafood" (only negative)
+// 1. Identify the main food intent - what the user WANTS to find.
+// 2. Extract ingredients or food types the user wants in include_ingredients.
+// 3. Extract ingredients or food types the user does NOT want in exclude_ingredients.
+// 4. For search_query: write ONLY what the user wants to search for (positive intent or question intent).
+// 5. Restaurant menus include: food dishes, drinks (wine, water, juice, soda, coffee, tea, beer ,etc.), desserts, appetizers, and beverages.
+// 6. If the user only mentions what they DON'T want, or the query is not about food, set search_query to null.
+// 7. The search_query should NOT contain negation words like "not", "don't", "without".
+// 8. The search_query should describe the dish or food type they want to find, not what to exclude.
+
 // Return ONLY valid JSON in this format:
 
 // {
-// "search_query": "clean semantic query for embedding",
-// "include_ingredients": [],
-// "exclude_ingredients": [],
+//   "search_query": "what user wants to find" OR null,
+//   "include_ingredients": [],
+//   "exclude_ingredients": []
 // }
+
 // `;
+
 const QUERY_UNDERSTANDING_PROMPT = `You are a query understanding system for a restaurant menu semantic search engine.
 
 Your job is to convert a user's natural language food request into a structured query for vector search.
 
 Follow these rules:
 
-1. Identify the main food intent - what the user WANTS to find.
-2. Extract ingredients or food types the user wants in include_ingredients.
-3. Extract ingredients or food types the user does NOT want in exclude_ingredients.
-4. For search_query: write ONLY what the user wants to search for (positive intent).
-5. If the user only mentions what they DON'T want, or the query is not about food, set search_query to null.
-6. The search_query should NOT contain negation words like "not", "don't", "without".
-7. The search_query should describe the dish or food type they want to find, not what to exclude.
+1. Identify the main food/drink/menu item intent - what the user WANTS to find.
+2. If the user asks for multiple items (e.g., "sandwich and wine"), combine them in the search_query.
+3. Extract ingredients or food types the user wants in include_ingredients.
+4. Extract ingredients or food types the user does NOT want in exclude_ingredients.
+5. For search_query: write ONLY what the user wants to search for (positive intent).
+6. Restaurant menus include: food dishes, drinks (wine, water, juice, soda, coffee, tea, beer, cocktails, etc.), desserts, appetizers, starters, main courses, sides, salads, soups, and beverages.
+7. Understand menu categories: appetizers, starters, entrees, main courses, mains, sides, desserts, sweets, drinks, beverages, etc.
+8. If the user only mentions what they DON'T want, or the query is not about menu items, set search_query to null.
+9. The search_query should NOT contain negation words like "not", "don't", "without".
+10. The search_query should describe the dish, drink, or menu item they want to find, not what to exclude.
 
 Return ONLY valid JSON in this format:
 
@@ -242,7 +239,14 @@ Return ONLY valid JSON in this format:
   "exclude_ingredients": []
 }
 
+Examples:
+- "what desserts do you have" → {"search_query": "desserts", "include_ingredients": [], "exclude_ingredients": []}
+- "show me your starters" → {"search_query": "starters", "include_ingredients": [], "exclude_ingredients": []}
+- "I want sandwich and wine" → {"search_query": "sandwich and wine", "include_ingredients": [], "exclude_ingredients": []}
+- "what kind of wine you have" → {"search_query": "wine", "include_ingredients": [], "exclude_ingredients": []}
+- "I don't like fish" → {"search_query": null, "include_ingredients": [], "exclude_ingredients": ["fish"]}
 `;
+
 const understandQuery = async (userQuery) => {
     const response = await openai.chat.completions.create({
         model: "gpt-4o-mini",

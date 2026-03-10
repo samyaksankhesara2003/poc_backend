@@ -1,5 +1,6 @@
 import { WebSocketServer } from "ws";
 import { createSpeechmaticsSocketModify } from "../services/modifyspeechmatricsV2.service.js";
+import TranscriptionIntervalLogger from "../services/transcriptionLogger.service.js";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -48,7 +49,16 @@ wss.on("connection", (clientWs, req) => {
   const waiterEmail = getWaiterEmailFromRequest(req);
 
   let priming = true;
-  const smWs = createSpeechmaticsSocketModify(clientWs);
+
+  // Create a per-session transcription interval logger
+  const transcriptionLogger = new TranscriptionIntervalLogger({
+    intervalMs: 6000,           // flush every 6 seconds (5–7 s range)
+    sessionId: `sm_${Date.now()}`,
+    // Optional: pipe the collected text into another service
+    // onInterval: (text, meta) => { /* e.g. call searchMenuWithEmbeddingService */ },
+  });
+
+  const smWs = createSpeechmaticsSocketModify(clientWs, transcriptionLogger);
   const liveBuffer = [];
 
   smWs.once("open", () => {
@@ -67,6 +77,9 @@ wss.on("connection", (clientWs, req) => {
           if (smWs.readyState === smWs.OPEN) smWs.send(chunk);
         }
         liveBuffer.length = 0;
+
+        // Start the interval logger now that live audio is flowing
+        transcriptionLogger.start();
       });
   });
 
@@ -80,6 +93,8 @@ wss.on("connection", (clientWs, req) => {
 
   clientWs.on("close", () => {
     console.log("❌ Browser disconnected");
+    // Stop the interval logger (flushes any remaining text)
+    transcriptionLogger.stop();
     if (smWs.readyState === smWs.OPEN) {
       smWs.send(JSON.stringify({ message: "EndOfStream" }));
     }

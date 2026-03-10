@@ -2,7 +2,12 @@ import WebSocket from "ws";
 import dotenv from "dotenv";
 dotenv.config();
 
-export function createSpeechmaticsSocketModify(clientWs) {
+/**
+ * @param {WebSocket}  clientWs
+ * @param {import("./transcriptionLogger.service.js").default} [transcriptionLogger]
+ *        Optional logger that captures transcript text every N seconds.
+ */
+export function createSpeechmaticsSocketModify(clientWs, transcriptionLogger) {
     const smWs = new WebSocket("wss://eu2.rt.speechmatics.com/v2", {
         headers: {
             Authorization: `Bearer ${process.env.SPEECHMATICS_API_KEY}`,
@@ -42,11 +47,21 @@ export function createSpeechmaticsSocketModify(clientWs) {
             const message = JSON.parse(data.toString());
 
             if (message.message === "AddTranscript") {
+                // Forward to the browser client (existing behaviour)
                 clientWs.send(JSON.stringify(message));
+
+                // Feed into the interval logger (non-blocking, runs in parallel)
+                if (transcriptionLogger) {
+                    transcriptionLogger.push(message);
+                }
             }
 
             if (message.message === "EndOfTranscript") {
                 console.log("🛑 Transcription finished");
+                // Stop the logger when the transcript stream ends
+                if (transcriptionLogger) {
+                    transcriptionLogger.stop();
+                }
             }
         } catch (err) {
             console.error("Speechmatics parse error:", err);
