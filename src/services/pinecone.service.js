@@ -287,7 +287,7 @@ const searchMenuWithEmbeddingService = async (body) => {
 
         const response = await ns.query({
             vector: queryEmbedding,
-            topK: 5,
+            topK: 10,
             includeMetadata: true,
         });
 
