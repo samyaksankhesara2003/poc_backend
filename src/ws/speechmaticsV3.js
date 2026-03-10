@@ -1,6 +1,6 @@
 import { WebSocketServer } from "ws";
 import { createSpeechmaticsSocketModify } from "../services/modifyspeechmatricsV2.service.js";
-import TranscriptionIntervalLogger from "../services/transcriptionLogger.service.js";
+import { createTranscriptionLogger } from "../services/transcriptionLogger.service.js";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -51,7 +51,7 @@ wss.on("connection", (clientWs, req) => {
   let priming = true;
 
   // Create a per-session transcription interval logger
-  const transcriptionLogger = new TranscriptionIntervalLogger({
+  const transcriptionLogger = createTranscriptionLogger({
     intervalMs: 6000,           // flush every 6 seconds (5–7 s range)
     sessionId: `sm_${Date.now()}`,
     // Optional: pipe the collected text into another service
