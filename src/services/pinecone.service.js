@@ -7,7 +7,8 @@ import { Pinecone } from "@pinecone-database/pinecone";
 const pinecone = new Pinecone({
     apiKey: process.env.PINECONE_API_KEY,
 });
-const index = pinecone.index("restaurants");
+const selfHostedindex = '512-self-hostaid' // restaurants(1024)
+const index = pinecone.index(selfHostedindex);
 
 const getNamespacesService = async () => {
     try {
@@ -48,16 +49,71 @@ const getRecordsService = async (query) => {
     }
 };
 
+const QUERY_UNDERSTANDING_PROMPT = `You are a query understanding system for a restaurant menu semantic search engine.
+
+Your job is to convert a user's natural language food request into a structured query for vector search.
+
+Follow these rules:
+
+1. Identify the main food/drink/menu item intent - what the user WANTS to find.
+2. If the user asks for multiple items (e.g., "sandwich and wine"), combine them in the search_query.
+3. Extract ingredients or food types the user wants in include_ingredients.
+4. Extract ingredients or food types the user does NOT want in exclude_ingredients.
+5. For search_query: write ONLY what the user wants to search for (positive intent).
+6. Restaurant menus include: food dishes, drinks (wine, water, juice, soda, coffee, tea, beer, cocktails, etc.), desserts, appetizers, starters, main courses, sides, salads, soups, and beverages.
+7. Understand menu categories: appetizers, starters, entrees, main courses, mains, sides, desserts, sweets, drinks, beverages, etc.
+8. If the user only mentions what they DON'T want, or the query is not about menu items, set search_query to null.
+9. The search_query should NOT contain negation words like "not", "don't", "without".
+10. The search_query should describe the dish, drink, or menu item they want to find, not what to exclude.
+
+Return ONLY valid JSON in this format:
+
+{
+  "search_query": "what user wants to find" OR null,
+  "include_ingredients": [],
+  "exclude_ingredients": []
+}
+
+Examples:
+- "what desserts do you have" → {"search_query": "desserts", "include_ingredients": [], "exclude_ingredients": []}
+- "show me your starters" → {"search_query": "starters", "include_ingredients": [], "exclude_ingredients": []}
+- "I want sandwich and wine" → {"search_query": "sandwich and wine", "include_ingredients": [], "exclude_ingredients": []}
+- "what kind of wine you have" → {"search_query": "wine", "include_ingredients": [], "exclude_ingredients": []}
+- "I don't like fish" → {"search_query": null, "include_ingredients": [], "exclude_ingredients": ["fish"]}
+`;
+
+const queryUnderstandingModel = "gpt-4.1-nano";
+const understandQuery = async (userQuery) => {
+    const response = await openai.chat.completions.create({
+        model: queryUnderstandingModel,
+        temperature: 0,
+        response_format: { type: "json_object" },
+        messages: [
+            { role: "system", content: QUERY_UNDERSTANDING_PROMPT },
+            { role: "user", content: userQuery },
+        ],
+    });
+    return JSON.parse(response.choices[0].message.content);
+};
+
 const searchMenuService = async (body) => {
 
     try {
         const { query, namespace } = body;
+        const understood = await understandQuery(query);
+        console.log(understood, "understood");
+        if (!understood.search_query) {
+            return { message: 'No search query found', data: [] };
+        }
         const ns = index.namespace(namespace);
-
+        console.time('search with text')
         const response = await ns.searchRecords({
             query: {
-                topK: 10,
-                inputs: { text: query },
+                topK: 5,
+                inputs: { text: understood.search_query },
+                filter: {
+                    tags: { $in: ["wine"] }
+                }
             },
             rerank: {
                 model: "bge-reranker-v2-m3",
@@ -65,6 +121,7 @@ const searchMenuService = async (body) => {
                 rankFields: ["text"],
             },
         });
+        console.timeEnd('search with text')
 
         const results = response.result?.hits?.map((item) => ({
             id: item._id,
@@ -121,17 +178,19 @@ const uploadMenuService = async () => {
 // ─── OpenAI Self-Embedding POC ───
 import OpenAI from "openai";
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const selfEmbeddingIndex = pinecone.index("servesense");
+const selfIndexName = "small-embedding"; //small-embedding (512), test (1536) , servesense (3072 , large)
+const selfEmbeddingIndex = pinecone.index(selfIndexName);
 
 /**
  * Generate a 3072-dim embedding using OpenAI text-embedding-3-large.
  */
+
+const embeddingModel = "text-embedding-3-small";
 const generateEmbedding = async (text) => {
     const response = await openai.embeddings.create({
-        model: "text-embedding-3-large",
+        model: embeddingModel,
         input: text,
-        // dimensions: 1536
-
+        dimensions: 512
     });
 
     return response.data[0].embedding;
@@ -189,87 +248,16 @@ const uploadMenuWithEmbeddingService = async () => {
     }
 };
 
-// const QUERY_UNDERSTANDING_PROMPT = `You are a query understanding system for a restaurant menu semantic search engine.
 
-// Your job is to convert a user's natural language food request into a structured query for vector search.
 
-// Follow these rules:
-
-// 1. Identify the main food intent - what the user WANTS to find.
-// 2. Extract ingredients or food types the user wants in include_ingredients.
-// 3. Extract ingredients or food types the user does NOT want in exclude_ingredients.
-// 4. For search_query: write ONLY what the user wants to search for (positive intent or question intent).
-// 5. Restaurant menus include: food dishes, drinks (wine, water, juice, soda, coffee, tea, beer ,etc.), desserts, appetizers, and beverages.
-// 6. If the user only mentions what they DON'T want, or the query is not about food, set search_query to null.
-// 7. The search_query should NOT contain negation words like "not", "don't", "without".
-// 8. The search_query should describe the dish or food type they want to find, not what to exclude.
-
-// Return ONLY valid JSON in this format:
-
-// {
-//   "search_query": "what user wants to find" OR null,
-//   "include_ingredients": [],
-//   "exclude_ingredients": []
-// }
-
-// `;
-
-const QUERY_UNDERSTANDING_PROMPT = `You are a query understanding system for a restaurant menu semantic search engine.
-
-Your job is to convert a user's natural language food request into a structured query for vector search.
-
-Follow these rules:
-
-1. Identify the main food/drink/menu item intent - what the user WANTS to find.
-2. If the user asks for multiple items (e.g., "sandwich and wine"), combine them in the search_query.
-3. Extract ingredients or food types the user wants in include_ingredients.
-4. Extract ingredients or food types the user does NOT want in exclude_ingredients.
-5. For search_query: write ONLY what the user wants to search for (positive intent).
-6. Restaurant menus include: food dishes, drinks (wine, water, juice, soda, coffee, tea, beer, cocktails, etc.), desserts, appetizers, starters, main courses, sides, salads, soups, and beverages.
-7. Understand menu categories: appetizers, starters, entrees, main courses, mains, sides, desserts, sweets, drinks, beverages, etc.
-8. If the user only mentions what they DON'T want, or the query is not about menu items, set search_query to null.
-9. The search_query should NOT contain negation words like "not", "don't", "without".
-10. The search_query should describe the dish, drink, or menu item they want to find, not what to exclude.
-
-Return ONLY valid JSON in this format:
-
-{
-  "search_query": "what user wants to find" OR null,
-  "include_ingredients": [],
-  "exclude_ingredients": []
-}
-
-Examples:
-- "what desserts do you have" → {"search_query": "desserts", "include_ingredients": [], "exclude_ingredients": []}
-- "show me your starters" → {"search_query": "starters", "include_ingredients": [], "exclude_ingredients": []}
-- "I want sandwich and wine" → {"search_query": "sandwich and wine", "include_ingredients": [], "exclude_ingredients": []}
-- "what kind of wine you have" → {"search_query": "wine", "include_ingredients": [], "exclude_ingredients": []}
-- "I don't like fish" → {"search_query": null, "include_ingredients": [], "exclude_ingredients": ["fish"]}
-`;
-
-const understandQuery = async (userQuery) => {
-    const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        temperature: 0,
-        response_format: { type: "json_object" },
-        messages: [
-            { role: "system", content: QUERY_UNDERSTANDING_PROMPT },
-            { role: "user", content: userQuery },
-        ],
-    });
-    return JSON.parse(response.choices[0].message.content);
-};
-
-/**
- * Search menu using OpenAI-generated query embedding against 'slefembedding' index.
- * Adds an LLM query understanding layer to handle negation and intent extraction.
- */
 const searchMenuWithEmbeddingService = async (body) => {
     try {
         const { query, namespace } = body;
 
         // Step 1: LLM Query Understanding
+        console.time('⏱️ LLM Query Understanding Time');
         const understood = await understandQuery(query);
+        console.timeEnd('⏱️ LLM Query Understanding Time');
         console.log('🧠 Query understanding:', JSON.stringify(understood));
 
         // If search_query is empty, no food intent found — skip Pinecone
@@ -283,13 +271,17 @@ const searchMenuWithEmbeddingService = async (body) => {
 
         // Step 2: Generate embedding from the rewritten search query
         const ns = selfEmbeddingIndex.namespace(namespace || 'casasantiago_menu_openai');
+        console.time('⏱️ Embedding Time');
         const queryEmbedding = await generateEmbedding(understood.search_query);
+        console.timeEnd('⏱️ Embedding Time');
 
+        console.time('⏱️ Pinecone Query Time');
         const response = await ns.query({
             vector: queryEmbedding,
-            topK: 10,
+            topK: 5,
             includeMetadata: true,
         });
+        console.timeEnd('⏱️ Pinecone Query Time');
 
         // Step 3: Filter out results that match exclude_ingredients
         const excludeSet = (understood.exclude_ingredients || []).map((i) => i.toLowerCase());
